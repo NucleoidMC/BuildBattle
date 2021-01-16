@@ -1,0 +1,6 @@
+build_area
+build_ground
+build_spawn
+build_villager
+
+wait_spawn
