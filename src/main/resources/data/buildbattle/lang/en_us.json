@@ -1,0 +1,24 @@
+{
+  "buildbattle.text.theme": "Theme of this Build Battle is: %s",
+  "buildbattle.text.buildend": "Building time has ended!",
+  "buildbattle.text.votenext": "This build got %s points! ",
+  "buildbattle.text.nextarea": "Switching to next build...",
+  "buildbattle.text.gameend": "The game has ended!",
+
+  "buildbattle.text.winplace": "%s: %s - %s points",
+
+  "buildbattle.text.nowin": "Nobody won!",
+  "buildbattle.text.yourscore": "You've got %s place with %s points!",
+  "buildbattle.text.voteown": "You can't vote for your own build!",
+  "buildbattle.text.vote": "You rated this build as: %s",
+  "buildbattle.text.and": " and ",
+  "buildbattle.text.disconnected": "disconnected player",
+  "buildbattle.item.vote0": "What the...",
+  "buildbattle.item.vote1": "Bad",
+  "buildbattle.item.vote2": "Not bad",
+  "buildbattle.item.vote3": "Okay",
+  "buildbattle.item.vote4": "Good",
+  "buildbattle.item.vote5": "Great",
+  "buildbattle.item.vote6": "WOW"
+
+}

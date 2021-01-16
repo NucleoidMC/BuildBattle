@@ -14,19 +14,19 @@ public final class BBTimerBar {
         this.widget = widgets.addBossBar(title, BossBar.Color.GREEN, BossBar.Style.NOTCHED_10);
     }
 
-    public void update(long ticksUntilEnd, long totalTicksUntilEnd) {
+    public void update(long ticksUntilEnd, long totalTicksUntilEnd, String theme) {
         if (ticksUntilEnd % 20 == 0) {
-            this.widget.setTitle(this.getText(ticksUntilEnd));
+            this.widget.setTitle(this.getText(ticksUntilEnd, theme));
             this.widget.setProgress((float) ticksUntilEnd / totalTicksUntilEnd);
         }
     }
 
-    private Text getText(long ticksUntilEnd) {
+    private Text getText(long ticksUntilEnd, String theme) {
         long secondsUntilEnd = ticksUntilEnd / 20;
 
         long minutes = secondsUntilEnd / 60;
         long seconds = secondsUntilEnd % 60;
-        String time = String.format("%02d:%02d left", minutes, seconds);
+        String time = String.format("§f%02d:%02d left §7- §eTheme: §f%s", minutes, seconds, theme);
 
         return new LiteralText(time);
     }

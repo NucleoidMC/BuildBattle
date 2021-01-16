@@ -25,6 +25,7 @@ public class BBSpawnLogic {
     public void resetPlayer(ServerPlayerEntity player, GameMode gameMode) {
         player.setGameMode(gameMode);
         player.setVelocity(Vec3d.ZERO);
+        player.inventory.clear();
         player.fallDistance = 0.0f;
         player.abilities.allowFlying = true;
         player.networkHandler.sendPacket(new PlayerAbilitiesS2CPacket(player.abilities));
@@ -45,7 +46,7 @@ public class BBSpawnLogic {
 
             BBPlayer bbPlayer = this.game.participants.get(PlayerRef.of(player));
 
-            if (bbPlayer != null && bbPlayer.arena != null) {
+            if (bbPlayer != null) {
                 double x = MathHelper.nextDouble(player.getRandom(), bbPlayer.arena.spawn.getMin().getX(), bbPlayer.arena.spawn.getMax().getX());
                 double y = bbPlayer.arena.spawn.getMin().getY();
                 double z = MathHelper.nextDouble(player.getRandom(), bbPlayer.arena.spawn.getMin().getZ(), bbPlayer.arena.spawn.getMax().getZ());

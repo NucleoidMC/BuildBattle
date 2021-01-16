@@ -1,12 +1,21 @@
 package eu.pb4.buildbattle.game;
 
+import eu.pb4.buildbattle.custom.BBItems;
+import eu.pb4.buildbattle.custom.VotingItem;
 import eu.pb4.buildbattle.game.map.BuildArena;
+import eu.pb4.buildbattle.themes.Theme;
+import eu.pb4.buildbattle.themes.ThemesRegistry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
+import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.event.*;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
@@ -37,8 +46,9 @@ public class BBActive {
     public final Object2ObjectMap<PlayerRef, BBPlayer> participants;
     private final BBSpawnLogic spawnLogic;
     private final BBStageManager stageManager;
-    private final boolean ignoreWinState;
     private final BBTimerBar timerBar;
+
+    public final String theme;
 
     public BuildArena votedArea = null;
     private Iterator<BuildArena> votingArenaIterator = null;
@@ -57,12 +67,25 @@ public class BBActive {
             if (arena.players.size() >= this.config.teamSize) {
                 arena = arenaIterator.next();
             }
-            this.participants.put(player, new BBPlayer(arena));
+            this.participants.put(player, new BBPlayer(arena, player));
         }
 
         this.stageManager = new BBStageManager();
-        this.ignoreWinState = this.participants.size() <= 1;
         this.timerBar = new BBTimerBar(widgets);
+
+
+        Theme theme = ThemesRegistry.get(config.theme);
+
+        if (theme != null) {
+            this.theme = theme.getRandom();
+        } else {
+            this.theme = "Undefined";
+        }
+
+        gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                .append(new TranslatableText("buildbattle.text.theme",
+                        new LiteralText(this.theme).formatted(Formatting.GOLD)
+                ).formatted(Formatting.WHITE)));
     }
 
     public static void open(GameSpace gameSpace, BBMap map, BBConfig config) {
@@ -91,11 +114,33 @@ public class BBActive {
             game.on(PlayerRemoveListener.EVENT, active::removePlayer);
             game.on(PlaceBlockListener.EVENT, active::onPlaceBlock);
             game.on(BreakBlockListener.EVENT, active::onBreakBlock);
+            game.on(UseItemListener.EVENT, active::onItemUse);
             game.on(GameTickListener.EVENT, active::tick);
 
             game.on(PlayerDamageListener.EVENT, active::onPlayerDamage);
             game.on(PlayerDeathListener.EVENT, active::onPlayerDeath);
         });
+    }
+
+    private TypedActionResult<ItemStack> onItemUse(ServerPlayerEntity player, Hand hand) {
+        BBPlayer bbPlayer = this.participants.get(PlayerRef.of(player));
+        if (bbPlayer != null && this.stageManager.isVoting && this.stageManager.waitTime <= -1) {
+            if (this.votedArea.players.contains(bbPlayer)) {
+                player.sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                        .append(new TranslatableText("buildbattle.text.voteown").formatted(Formatting.RED)), false);
+
+                return TypedActionResult.fail(player.getStackInHand(hand));
+            }
+
+            ItemStack itemStack = player.getStackInHand(hand);
+            if (itemStack.getItem() instanceof VotingItem) {
+                bbPlayer.currentVote = ((VotingItem) itemStack.getItem()).score;
+                player.sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                        .append(new TranslatableText("buildbattle.text.vote", itemStack.getName()).formatted(Formatting.WHITE)), false);
+            }
+            return TypedActionResult.success(player.getStackInHand(hand), true);
+        }
+        return TypedActionResult.pass(player.getStackInHand(hand));
     }
 
     private ActionResult onBreakBlock(ServerPlayerEntity serverPlayerEntity, BlockPos blockPos) {
@@ -106,7 +151,7 @@ public class BBActive {
         BuildArena buildArena = this.gameMap.getBuildArea(blockPos);
         BBPlayer bbPlayer = this.participants.get(PlayerRef.of(serverPlayerEntity));
 
-        if (buildArena != null && bbPlayer != null && buildArena.canBuild(blockPos, bbPlayer)) {
+        if (buildArena != null && bbPlayer != null && this.stageManager.waitTime <= -1 && buildArena.canBuild(blockPos, bbPlayer)) {
             return ActionResult.SUCCESS;
         }
 
@@ -121,7 +166,7 @@ public class BBActive {
         BuildArena buildArena = this.gameMap.getBuildArea(blockPos);
         BBPlayer bbPlayer = this.participants.get(PlayerRef.of(serverPlayerEntity));
 
-        if (buildArena != null && bbPlayer != null && buildArena.canBuild(blockPos, bbPlayer)) {
+        if (buildArena != null && bbPlayer != null && this.stageManager.waitTime <= -1 && buildArena.canBuild(blockPos, bbPlayer)) {
             return ActionResult.SUCCESS;
         }
 
@@ -161,6 +206,16 @@ public class BBActive {
 
     private void spawnParticipant(ServerPlayerEntity player) {
         this.spawnLogic.resetPlayer(player, this.stageManager.isVoting ? GameMode.ADVENTURE : GameMode.CREATIVE);
+        if (this.stageManager.isVoting) {
+            player.inventory.insertStack(BBItems.WT.getItemStack());
+            player.inventory.insertStack(BBItems.BAD.getItemStack());
+            player.inventory.insertStack(BBItems.NB.getItemStack());
+            player.inventory.insertStack(BBItems.OKAY.getItemStack());
+            player.inventory.insertStack(BBItems.GOOD.getItemStack());
+            player.inventory.insertStack(BBItems.GREAT.getItemStack());
+            player.inventory.insertStack(BBItems.WOW.getItemStack());
+        }
+
         this.spawnLogic.spawnPlayer(player);
     }
 
@@ -176,42 +231,49 @@ public class BBActive {
         BBStageManager.IdleTickResult result = this.stageManager.tick(time, gameSpace);
 
         switch (result) {
-            case BUILD_TICK:
-                break;
+            case BUILD_WAIT:
+                gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                        .append(new TranslatableText("buildbattle.text.buildend").formatted(Formatting.GREEN)));
+                return;
             case BUILD_FINISHED_TICK:
                 this.votingArenaIterator = this.gameMap.buildArenas.iterator();
                 this.votingNextArena();
                 return;
             case TICK_FINISHED:
                 return;
-            case VOTE_TICK:
-                break;
             case VOTE_NEXT:
-                this.votingNextArena();
+                if (this.votingNextArena()) {
+                    gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                            .append(new TranslatableText("buildbattle.text.nextarea").formatted(Formatting.BLUE)));
+                }
                 return;
             case VOTE_WAIT:
                 this.countScore();
+                gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                        .append(new TranslatableText("buildbattle.text.votenext",
+                                new LiteralText("" + this.votedArea.score).formatted(Formatting.GOLD)
+                        ).formatted(Formatting.YELLOW)));
                 return;
             case GAME_FINISHED:
-                this.broadcastWin(this.checkWinResult());
+                this.broadcastWin();
                 return;
             case GAME_CLOSED:
-                this.gameSpace.close();
+                this.gameSpace.close(GameCloseReason.FINISHED);
                 return;
         }
 
-        this.timerBar.update(this.stageManager.finishTime - time, this.stageManager.isVoting ? this.stageManager.nextVoteTime : this.config.timeLimitSecs * 20);
+        this.timerBar.update(this.stageManager.finishTime - time, this.stageManager.finishDiffTime, this.theme);
     }
 
     private void countScore() {
         if (this.votedArea != null) {
             for (BBPlayer bbPlayer : this.participants.values()) {
-                this.votedArea.score += bbPlayer.currentVote;
+                this.votedArea.score += bbPlayer.getAndClearCurrentVote();
             }
         }
     }
 
-    private void votingNextArena() {
+    private boolean votingNextArena() {
         while (this.votingArenaIterator.hasNext()) {
             BuildArena arena = this.votingArenaIterator.next();
             if (arena.players.size() > 0) {
@@ -224,65 +286,50 @@ public class BBActive {
                         this.spawnSpectator(player);
                     }
                 }
-                return;
+                return true;
             }
         }
 
-
         this.stageManager.isFinished = true;
+        return false;
     }
 
-    private void broadcastWin(WinResult result) {
-        ServerPlayerEntity winningPlayer = result.getWinningPlayer();
+    private void broadcastWin() {
+        List<BuildArena> buildArenaList = this.gameMap.buildArenas.stream()
+                .sorted(Comparator.comparingDouble(p -> -p.score))
+                .collect(Collectors.toList());
 
-        Text message;
-        if (winningPlayer != null) {
-            message = winningPlayer.getDisplayName().shallowCopy().append(" has won the game!").formatted(Formatting.GOLD);
-        } else {
-            message = new LiteralText("The game ended, but nobody won!").formatted(Formatting.GOLD);
-        }
-
+        Text message = new LiteralText("» ").formatted(Formatting.GRAY).append(
+                new TranslatableText("buildbattle.text.gameend").formatted(Formatting.GOLD)
+        );
         PlayerSet players = this.gameSpace.getPlayers();
         players.sendMessage(message);
+
+        for (int x = 0; x < 5; x++) {
+            BuildArena arena = buildArenaList.get(x);
+            players.sendMessage(new TranslatableText("buildbattle.text.winplace",
+                    x + 1,
+                    arena.getBuilders(this),
+                    new LiteralText("" + arena.score).formatted(Formatting.WHITE)
+            ).formatted(Formatting.YELLOW));
+        }
+
+        for (BuildArena arena : buildArenaList) {
+            Text mes = new LiteralText("» ").formatted(Formatting.GRAY).append(
+                    new TranslatableText("buildbattle.text.yourscore",
+                            new LiteralText("" + (buildArenaList.indexOf(arena) + 1)).formatted(Formatting.WHITE),
+                            new LiteralText("" + arena.score).formatted(Formatting.WHITE)
+                    ).formatted(Formatting.GOLD)
+            );
+            for (BBPlayer bbPlayer : arena.players) {
+                ServerPlayerEntity player = bbPlayer.playerRef.getEntity(this.gameSpace.getWorld());
+                if (player != null) {
+                    player.sendMessage(mes, false);
+                }
+
+            }
+        }
+
         players.sendSound(SoundEvents.ENTITY_VILLAGER_YES);
-    }
-
-    private WinResult checkWinResult() {
-        // for testing purposes: don't end the game if we only ever had one participant
-        if (this.ignoreWinState) {
-            return WinResult.no();
-        }
-
-        ServerWorld world = this.gameSpace.getWorld();
-        ServerPlayerEntity winningPlayer = null;
-
-        // TODO win result logic
-        return WinResult.no();
-    }
-
-    static class WinResult {
-        final ServerPlayerEntity winningPlayer;
-        final boolean win;
-
-        private WinResult(ServerPlayerEntity winningPlayer, boolean win) {
-            this.winningPlayer = winningPlayer;
-            this.win = win;
-        }
-
-        static WinResult no() {
-            return new WinResult(null, false);
-        }
-
-        static WinResult win(ServerPlayerEntity player) {
-            return new WinResult(player, true);
-        }
-
-        public boolean isWin() {
-            return this.win;
-        }
-
-        public ServerPlayerEntity getWinningPlayer() {
-            return this.winningPlayer;
-        }
     }
 }
