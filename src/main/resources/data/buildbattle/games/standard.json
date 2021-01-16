@@ -1,7 +1,7 @@
 {
   "type": "buildbattle:buildbattle",
   "map": {
-    "id": "buildbattle:arena",
+    "id": "buildbattle:arena_medium",
     "waitId": "buildbattle:wait"
 
   },

@@ -40,6 +40,9 @@ public class BBActive {
     private final boolean ignoreWinState;
     private final BBTimerBar timerBar;
 
+    public BuildArena votedArea = null;
+    private Iterator<BuildArena> votingArenaIterator = null;
+
     private BBActive(GameSpace gameSpace, BBMap map, GlobalWidgets widgets, BBConfig config, Set<PlayerRef> participants) {
         this.gameSpace = gameSpace;
         this.config = config;
@@ -88,7 +91,6 @@ public class BBActive {
             game.on(PlayerRemoveListener.EVENT, active::removePlayer);
             game.on(PlaceBlockListener.EVENT, active::onPlaceBlock);
             game.on(BreakBlockListener.EVENT, active::onBreakBlock);
-
             game.on(GameTickListener.EVENT, active::tick);
 
             game.on(PlayerDamageListener.EVENT, active::onPlayerDamage);
@@ -132,11 +134,10 @@ public class BBActive {
             ref.ifOnline(world, this::spawnParticipant);
         }
         this.stageManager.onOpen(world.getTime(), this.config);
-        // TODO setup logic
     }
 
     private void onClose() {
-        // TODO teardown logic
+
     }
 
     private void addPlayer(ServerPlayerEntity player) {
@@ -150,19 +151,16 @@ public class BBActive {
     }
 
     private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
-        // TODO handle damage
-        this.spawnParticipant(player);
         return ActionResult.FAIL;
     }
 
     private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
-        // TODO handle death
         this.spawnParticipant(player);
         return ActionResult.FAIL;
     }
 
     private void spawnParticipant(ServerPlayerEntity player) {
-        this.spawnLogic.resetPlayer(player, GameMode.ADVENTURE);
+        this.spawnLogic.resetPlayer(player, this.stageManager.isVoting ? GameMode.ADVENTURE : GameMode.CREATIVE);
         this.spawnLogic.spawnPlayer(player);
     }
 
@@ -180,9 +178,21 @@ public class BBActive {
         switch (result) {
             case BUILD_TICK:
                 break;
+            case BUILD_FINISHED_TICK:
+                this.votingArenaIterator = this.gameMap.buildArenas.iterator();
+                this.votingNextArena();
+                return;
             case TICK_FINISHED:
                 return;
-            case VOTE_FINISHED_TICK:
+            case VOTE_TICK:
+                break;
+            case VOTE_NEXT:
+                this.votingNextArena();
+                return;
+            case VOTE_WAIT:
+                this.countScore();
+                return;
+            case GAME_FINISHED:
                 this.broadcastWin(this.checkWinResult());
                 return;
             case GAME_CLOSED:
@@ -190,7 +200,36 @@ public class BBActive {
                 return;
         }
 
-        this.timerBar.update(this.stageManager.finishTime - time, this.config.timeLimitSecs * 20);
+        this.timerBar.update(this.stageManager.finishTime - time, this.stageManager.isVoting ? this.stageManager.nextVoteTime : this.config.timeLimitSecs * 20);
+    }
+
+    private void countScore() {
+        if (this.votedArea != null) {
+            for (BBPlayer bbPlayer : this.participants.values()) {
+                this.votedArea.score += bbPlayer.currentVote;
+            }
+        }
+    }
+
+    private void votingNextArena() {
+        while (this.votingArenaIterator.hasNext()) {
+            BuildArena arena = this.votingArenaIterator.next();
+            if (arena.players.size() > 0) {
+                this.votedArea = arena;
+                for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+                    if (this.participants.get(PlayerRef.of(player)) != null) {
+                        this.spawnParticipant(player);
+                    }
+                    else {
+                        this.spawnSpectator(player);
+                    }
+                }
+                return;
+            }
+        }
+
+
+        this.stageManager.isFinished = true;
     }
 
     private void broadcastWin(WinResult result) {

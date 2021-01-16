@@ -4,7 +4,6 @@ import eu.pb4.buildbattle.game.BBPlayer;
 import net.minecraft.util.math.BlockPos;
 import xyz.nucleoid.plasmid.util.BlockBounds;
 
-import javax.security.auth.login.CredentialException;
 import java.util.ArrayList;
 import java.util.List;
 

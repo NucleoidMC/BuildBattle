@@ -34,7 +34,7 @@ public class BBMapBuilder {
 
 
             int waitOffset = templateWait.getBounds().getSize().getX();
-            int areaOffset = templateArea.getBounds().getSize().getX();
+            int areaOffset = templateArea.getBounds().getSize().getX() + 16;
 
 
             for (int x = 0; x <= config.playerConfig.getMaxPlayers(); x++) {
