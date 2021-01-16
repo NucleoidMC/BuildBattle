@@ -1,5 +1,6 @@
 package eu.pb4.buildbattle.game;
 
+import net.minecraft.network.packet.s2c.play.PlayerAbilitiesS2CPacket;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.plasmid.game.GameSpace;
@@ -25,12 +26,23 @@ public class BBSpawnLogic {
         player.setGameMode(gameMode);
         player.setVelocity(Vec3d.ZERO);
         player.fallDistance = 0.0f;
+        player.abilities.allowFlying = true;
+        player.networkHandler.sendPacket(new PlayerAbilitiesS2CPacket(player.abilities));
     }
 
     public void spawnPlayer(ServerPlayerEntity player) {
         ServerWorld world = this.gameSpace.getWorld();
 
         if (this.game != null) {
+            if (this.game.votedArea != null) {
+                double x = MathHelper.nextDouble(player.getRandom(), this.game.votedArea.spawn.getMin().getX(), this.game.votedArea.spawn.getMax().getX());
+                double y = this.game.votedArea.spawn.getMin().getY();
+                double z = MathHelper.nextDouble(player.getRandom(), this.game.votedArea.spawn.getMin().getZ(), this.game.votedArea.spawn.getMax().getZ());
+
+                player.teleport(world, x, y, z, player.yaw, player.pitch);
+                return;
+            }
+
             BBPlayer bbPlayer = this.game.participants.get(PlayerRef.of(player));
 
             if (bbPlayer != null && bbPlayer.arena != null) {
@@ -42,6 +54,7 @@ public class BBSpawnLogic {
                 return;
             }
         }
+
         System.out.println(this.map.waitSpawn);
         double x = MathHelper.nextDouble(player.getRandom(), this.map.waitSpawn.getMin().getX(), this.map.waitSpawn.getMax().getX());
         double y = this.map.waitSpawn.getMin().getY();
