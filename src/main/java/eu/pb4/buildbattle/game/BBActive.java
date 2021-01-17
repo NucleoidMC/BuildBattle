@@ -10,6 +10,7 @@ import eu.pb4.buildbattle.themes.ThemesRegistry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.sound.SoundCategory;
@@ -17,6 +18,7 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameSpace;
@@ -127,12 +129,26 @@ public class BBActive {
             game.on(PlaceBlockListener.EVENT, active::onPlaceBlock);
             game.on(BreakBlockListener.EVENT, active::onBreakBlock);
             game.on(UseItemListener.EVENT, active::onItemUse);
+            game.on(AttackEntityListener.EVENT, active::onEntityDamage);
             game.on(GameTickListener.EVENT, active::tick);
             game.on(ExplosionListener.EVENT, active::onExplosion);
 
             game.on(PlayerDamageListener.EVENT, active::onPlayerDamage);
             game.on(PlayerDeathListener.EVENT, active::onPlayerDeath);
         });
+    }
+
+    private ActionResult onEntityDamage(ServerPlayerEntity player, Hand hand, Entity entity, EntityHitResult entityHitResult) {
+        if (entity instanceof FloorChangingVillager) {
+            return ActionResult.FAIL;
+        }
+
+        BuildArena arena = this.gameMap.getBuildArea(entity.getBlockPos());
+        if (arena != null && arena.players.contains(this.participants.get(PlayerRef.of(player)))) {
+            return ActionResult.SUCCESS;
+        }
+
+        return ActionResult.FAIL;
     }
 
     private void onExplosion(List<BlockPos> blockPosList) {
