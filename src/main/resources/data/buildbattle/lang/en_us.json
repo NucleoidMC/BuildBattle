@@ -1,7 +1,7 @@
 {
   "buildbattle.text.theme": "Theme of this Build Battle is: %s",
   "buildbattle.text.buildend": "Building time has ended!",
-  "buildbattle.text.buildby": "Build by %s",
+  "buildbattle.text.buildby": "Built by %s",
   "buildbattle.text.buildscore": "This build got %s points! ",
   "buildbattle.text.nextarea": "Switching to next build...",
   "buildbattle.text.gameend": "The game has ended!",

@@ -58,7 +58,6 @@ public class BBSpawnLogic {
             }
         }
 
-        System.out.println(this.map.waitSpawn);
         double x = MathHelper.nextDouble(player.getRandom(), this.map.waitSpawn.getMin().getX(), this.map.waitSpawn.getMax().getX());
         double y = this.map.waitSpawn.getMin().getY();
         double z = MathHelper.nextDouble(player.getRandom(), this.map.waitSpawn.getMin().getZ(), this.map.waitSpawn.getMax().getZ());

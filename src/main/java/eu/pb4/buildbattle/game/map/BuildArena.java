@@ -68,7 +68,6 @@ public class BuildArena {
 
     public void trySpawningVillager() {
         if (this.game != null && this.villager == null) {
-            System.out.println("test");
             FloorChangingVillager villager = new FloorChangingVillager(this, this.game, this.game.gameSpace.getWorld());
             villager.setPos(this.villagerPos.x, this.villagerPos.y, this.villagerPos.z);
             System.out.println(villager);

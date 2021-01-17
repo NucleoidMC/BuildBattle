@@ -12,6 +12,6 @@
     "max": 24
   },
   "team_size": 2,
-  "time_limit_secs": 360,
+  "time_limit_secs": 480,
   "voting_time_secs": 20
 }

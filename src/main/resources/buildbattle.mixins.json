@@ -11,7 +11,9 @@
     "ArmorStandItemMixin",
     "FishBucketItemMixin",
     "MinecartItemMixin",
-    "BoatItemMixin"
+    "BoatItemMixin",
+    "PistonBlockMixin",
+    "EnderEyeItemMixin"
   ],
   "injectors": {
     "defaultRequire": 0

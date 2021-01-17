@@ -3,6 +3,8 @@ package eu.pb4.buildbattle.custom;
 import eu.pb4.buildbattle.game.BBActive;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.ChorusFlowerBlock;
+import net.minecraft.block.ChorusPlantBlock;
 import net.minecraft.block.PlantBlock;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -51,6 +53,8 @@ public class FloorChangingVillager extends VillagerEntity {
             if (this.buildArena.players.contains(this.game.participants.get(PlayerRef.of(player)))
                     && item instanceof BlockItem
                     && !(((BlockItem) item).getBlock() instanceof PlantBlock)
+                    && !(((BlockItem) item).getBlock() instanceof ChorusFlowerBlock)
+                    && !(((BlockItem) item).getBlock() instanceof ChorusPlantBlock)
                     && !this.game.stageManager.isVoting
                     && this.game.stageManager.waitTime == -1) {
 
