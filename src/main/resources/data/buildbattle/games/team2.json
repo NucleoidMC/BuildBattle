@@ -7,7 +7,8 @@
   },
   "theme": "buildbattle:normal",
   "players": {
-    "min": 8,
+    "min": 4,
+    "threshold": 8,
     "max": 24
   },
   "team_size": 2,
