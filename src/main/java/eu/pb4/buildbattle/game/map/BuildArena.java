@@ -1,5 +1,6 @@
 package eu.pb4.buildbattle.game.map;
 
+import eu.pb4.buildbattle.custom.FloorChangingVillager;
 import eu.pb4.buildbattle.game.BBActive;
 import eu.pb4.buildbattle.game.BBPlayer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -23,6 +24,8 @@ public class BuildArena {
     public final BlockBounds spawn;
     public final List<BBPlayer> players = new ArrayList();
     public final Vec3d villagerPos;
+    public FloorChangingVillager villager = null;
+    public BBActive game = null;
     public int score = 0;
 
     public BuildArena(BlockBounds area, BlockBounds ground, BlockBounds bounds, BlockBounds spawn, Vec3d villagerPos) {
@@ -63,4 +66,15 @@ public class BuildArena {
         }
     }
 
+    public void trySpawningVillager() {
+        if (this.game != null && this.villager == null) {
+            System.out.println("test");
+            FloorChangingVillager villager = new FloorChangingVillager(this, this.game, this.game.gameSpace.getWorld());
+            villager.setPos(this.villagerPos.x, this.villagerPos.y, this.villagerPos.z);
+            System.out.println(villager);
+            this.game.gameSpace.getWorld().getChunk(villager.getBlockPos());
+            this.game.gameSpace.getWorld().spawnEntity(villager);
+            this.villager = villager;
+        }
+    }
 }

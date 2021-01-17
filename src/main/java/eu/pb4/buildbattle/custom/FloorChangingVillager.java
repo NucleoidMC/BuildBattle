@@ -39,6 +39,8 @@ public class FloorChangingVillager extends VillagerEntity {
         this.game = game;
         this.setCustomNameVisible(true);
         this.setSilent(true);
+        this.setNoGravity(true);
+        this.setPersistent();
         this.setCustomName(new TranslatableText("buildbattle.text.floorchange").formatted(Formatting.GOLD));
     }
 

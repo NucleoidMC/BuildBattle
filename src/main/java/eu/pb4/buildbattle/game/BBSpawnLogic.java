@@ -52,6 +52,8 @@ public class BBSpawnLogic {
                 double z = MathHelper.nextDouble(player.getRandom(), bbPlayer.arena.spawn.getMin().getZ(), bbPlayer.arena.spawn.getMax().getZ());
 
                 player.teleport(world, x, y, z, player.yaw, player.pitch);
+
+                bbPlayer.arena.trySpawningVillager();
                 return;
             }
         }

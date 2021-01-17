@@ -1,6 +1,7 @@
 package eu.pb4.buildbattle.game;
 
 import eu.pb4.buildbattle.BuildBattle;
+import eu.pb4.buildbattle.Helper;
 import eu.pb4.buildbattle.custom.BBItems;
 import eu.pb4.buildbattle.custom.FloorChangingVillager;
 import eu.pb4.buildbattle.custom.VotingItem;
@@ -11,8 +12,10 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.ArmorStandItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
+import net.minecraft.item.MinecartItem;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
@@ -65,12 +68,9 @@ public class BBActive {
         this.spawnLogic = new BBSpawnLogic(gameSpace, map, this);
         this.participants = new Object2ObjectOpenHashMap<>();
 
-        for (BuildArena arena : map.buildArenas) {
-            FloorChangingVillager villager = new FloorChangingVillager(arena, this, this.gameSpace.getWorld());
-            villager.setPos(arena.villagerPos.x, arena.villagerPos.y, arena.villagerPos.z);
-            this.gameSpace.getWorld().spawnEntity(villager);
+        for (BuildArena arena : this.gameMap.buildArenas) {
+            arena.game = this;
         }
-
 
         Iterator<BuildArena> arenaIterator = map.buildArenas.iterator();
         BuildArena arena = arenaIterator.next();
@@ -144,8 +144,10 @@ public class BBActive {
         }
 
         BuildArena arena = this.gameMap.getBuildArea(entity.getBlockPos());
-        if (arena != null && arena.players.contains(this.participants.get(PlayerRef.of(player)))) {
-            return ActionResult.SUCCESS;
+        BBPlayer bbPlayer = this.participants.get(PlayerRef.of(player));
+
+        if (arena != null && arena.players.contains(bbPlayer)) {
+            return ActionResult.PASS;
         }
 
         return ActionResult.FAIL;
@@ -356,9 +358,10 @@ public class BBActive {
         }
 
         for (BuildArena arena : buildArenaList) {
+            int place = buildArenaList.indexOf(arena) + 1;
             Text mes = new LiteralText("» ").formatted(Formatting.GRAY).append(
                     new TranslatableText("buildbattle.text.yourscore",
-                            new LiteralText("" + (buildArenaList.indexOf(arena) + 1)).formatted(Formatting.WHITE),
+                            new LiteralText("" + (place)).append(Helper.getOrdinal(place)).formatted(Formatting.WHITE),
                             new LiteralText("" + arena.score).formatted(Formatting.WHITE)
                     ).formatted(Formatting.GOLD)
             );

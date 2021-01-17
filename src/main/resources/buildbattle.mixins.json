@@ -7,7 +7,11 @@
     "ServerPlayNetworkHandlerMixin",
     "WitherSkullBlockMixin",
     "SpawnEggItemMixin",
-    "DispenserBlockMixin"
+    "DispenserBlockMixin",
+    "ArmorStandItemMixin",
+    "FishBucketItemMixin",
+    "MinecartItemMixin",
+    "BoatItemMixin"
   ],
   "injectors": {
     "defaultRequire": 0
