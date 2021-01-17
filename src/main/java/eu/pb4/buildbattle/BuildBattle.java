@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import eu.pb4.buildbattle.game.BBConfig;
 import eu.pb4.buildbattle.game.BBWaiting;
+import xyz.nucleoid.plasmid.game.rule.GameRule;
 
 public class BuildBattle implements ModInitializer {
 
@@ -19,6 +20,8 @@ public class BuildBattle implements ModInitializer {
             BBWaiting::open,
             BBConfig.CODEC
     );
+
+    public static final GameRule CREATIVE_LIMIT = new GameRule();
 
     @Override
     public void onInitialize() {

@@ -1,18 +1,19 @@
 {
   "buildbattle.text.theme": "Theme of this Build Battle is: %s",
   "buildbattle.text.buildend": "Building time has ended!",
-  "buildbattle.text.votenext": "This build got %s points! ",
+  "buildbattle.text.buildby": "Builded by %s",
+  "buildbattle.text.buildscore": "This build got %s points! ",
   "buildbattle.text.nextarea": "Switching to next build...",
   "buildbattle.text.gameend": "The game has ended!",
-
+  "buildbattle.text.nobody": "Nobody",
   "buildbattle.text.winplace": "%s: %s - %s points",
-
   "buildbattle.text.nowin": "Nobody won!",
   "buildbattle.text.yourscore": "You've got %s place with %s points!",
   "buildbattle.text.voteown": "You can't vote for your own build!",
   "buildbattle.text.vote": "You rated this build as: %s",
   "buildbattle.text.and": " and ",
-  "buildbattle.text.disconnected": "disconnected player",
+  "buildbattle.text.disconnected": "[Disconnected Player]",
+  "buildbattle.text.floorchange": "Change floor to held block",
   "buildbattle.item.vote0": "What the...",
   "buildbattle.item.vote1": "Bad",
   "buildbattle.item.vote2": "Not bad",

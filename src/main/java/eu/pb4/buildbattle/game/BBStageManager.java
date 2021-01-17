@@ -8,6 +8,8 @@ public class BBStageManager {
     public long finishDiffTime = -1;
     public long waitTime = -1;
     private long startTime = -1;
+    public long votingTime = -1;
+
     public boolean isVoting = false;
     public boolean isAfterWaiting = false;
     public boolean isFinished = false;
@@ -21,6 +23,7 @@ public class BBStageManager {
         this.startTime = time - (time % 20);
         this.finishTime = this.startTime + (config.timeLimitSecs * 20);
         this.finishDiffTime = config.timeLimitSecs * 20;
+        this.votingTime = config.votingTimeSecs * 20;
     }
 
     public IdleTickResult tick(long time, GameSpace space) {
@@ -50,16 +53,15 @@ public class BBStageManager {
 
         if (time > this.finishTime) {
             if (this.isAfterWaiting && this.waitTime < 0) {
-                long voteTime = time + 30 * 20;
                 this.isAfterWaiting = false;
                 if (!this.isVoting) {
                     this.isVoting = true;
-                    this.finishTime = voteTime;
-                    this.finishDiffTime = 30 * 20;
+                    this.finishTime = time + this.votingTime;
+                    this.finishDiffTime = this.votingTime;
                     return IdleTickResult.BUILD_FINISHED_TICK;
                 } else {
-                    this.finishTime = voteTime;
-                    this.finishDiffTime = 30 * 20;
+                    this.finishTime = time + this.votingTime;
+                    this.finishDiffTime = this.votingTime;
                     return IdleTickResult.VOTE_NEXT;
                 }
             } else {

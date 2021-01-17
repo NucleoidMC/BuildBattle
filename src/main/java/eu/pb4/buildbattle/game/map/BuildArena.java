@@ -4,10 +4,12 @@ import eu.pb4.buildbattle.game.BBActive;
 import eu.pb4.buildbattle.game.BBPlayer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.plasmid.util.BlockBounds;
 import xyz.nucleoid.plasmid.util.PlayerRef;
 
@@ -20,13 +22,15 @@ public class BuildArena {
     public final BlockBounds bounds;
     public final BlockBounds spawn;
     public final List<BBPlayer> players = new ArrayList();
+    public final Vec3d villagerPos;
     public int score = 0;
 
-    public BuildArena(BlockBounds area, BlockBounds ground, BlockBounds bounds, BlockBounds spawn) {
+    public BuildArena(BlockBounds area, BlockBounds ground, BlockBounds bounds, BlockBounds spawn, Vec3d villagerPos) {
         this.area = area;
         this.ground = ground;
         this.bounds = bounds;
         this.spawn = spawn;
+        this.villagerPos = villagerPos;
     }
 
     public boolean canBuild(BlockPos blockPos, BBPlayer bbPlayer) {
@@ -35,9 +39,9 @@ public class BuildArena {
 
     public Text getBuilders(BBActive game) {
         if (this.players.isEmpty()) {
-            return new LiteralText("Nobody");
+            return new TranslatableText("buildbattle.text.nobody").formatted(Formatting.GRAY).formatted(Formatting.ITALIC);
         } else {
-            LiteralText text = new LiteralText("");
+            MutableText text = new LiteralText("").formatted(Formatting.WHITE);
 
             for (BBPlayer bbPlayer : this.players) {
                 int index = this.players.indexOf(bbPlayer);
@@ -52,7 +56,7 @@ public class BuildArena {
                 if (game.participants.get(bbPlayer.playerRef) != null) {
                     text.append(game.gameSpace.getPlayers().getEntity(bbPlayer.playerRef.getId()).getDisplayName());
                 } else {
-                    text.append(new TranslatableText("buildbattle.text.disconnected").formatted(Formatting.GRAY));
+                    text.append(new TranslatableText("buildbattle.text.disconnected").formatted(Formatting.GRAY).formatted(Formatting.ITALIC));
                 }
             }
             return text;

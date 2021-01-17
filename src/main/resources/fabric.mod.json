@@ -14,6 +14,9 @@
       "eu.pb4.buildbattle.BuildBattle"
     ]
   },
+  "mixins": [
+    "buildbattle.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.9.1",
     "fabric": "*",

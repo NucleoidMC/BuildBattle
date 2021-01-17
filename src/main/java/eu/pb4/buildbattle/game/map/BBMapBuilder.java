@@ -44,7 +44,9 @@ public class BBMapBuilder {
                         meta.getFirstRegionBounds("build_area"),
                         meta.getFirstRegionBounds("build_ground"),
                         translated.getBounds(),
-                        meta.getFirstRegionBounds("build_spawn")));
+                        meta.getFirstRegionBounds("build_spawn"),
+                        meta.getFirstRegionBounds("build_villager").getCenterBottom()
+                ));
 
                 template.mergeFrom(translated);
             }

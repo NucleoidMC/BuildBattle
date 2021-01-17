@@ -11,22 +11,23 @@ public class BBConfig {
             PlayerConfig.CODEC.fieldOf("players").forGetter(config -> config.playerConfig),
             BBMapConfig.CODEC.fieldOf("map").forGetter(config -> config.mapConfig),
             Codec.INT.fieldOf("time_limit_secs").forGetter(config -> config.timeLimitSecs),
+            Codec.INT.fieldOf("voting_time_secs").forGetter(config -> config.timeLimitSecs),
             Codec.INT.fieldOf("team_size").forGetter(config -> config.teamSize),
             Identifier.CODEC.fieldOf("theme").forGetter(config -> config.theme)
-
-
-            ).apply(instance, BBConfig::new));
+        ).apply(instance, BBConfig::new));
 
     public final PlayerConfig playerConfig;
     public final BBMapConfig mapConfig;
     public final int timeLimitSecs;
+    public final int votingTimeSecs;
     public final int teamSize;
     public final Identifier theme;
 
-    public BBConfig(PlayerConfig players, BBMapConfig mapConfig, int timeLimitSecs, int teamSize, Identifier theme) {
+    public BBConfig(PlayerConfig players, BBMapConfig mapConfig, int timeLimitSecs, int votingTimeSecs, int teamSize, Identifier theme) {
         this.playerConfig = players;
         this.mapConfig = mapConfig;
         this.timeLimitSecs = timeLimitSecs;
+        this.votingTimeSecs = votingTimeSecs;
         this.teamSize = teamSize;
         this.theme = theme;
     }

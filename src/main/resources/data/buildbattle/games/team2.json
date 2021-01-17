@@ -1,16 +1,16 @@
 {
   "type": "buildbattle:buildbattle",
-  "name": "Build Battle",
+  "name": "Build Battle (Teams)",
   "map": {
     "id": "buildbattle:arena_medium",
     "waitId": "buildbattle:wait"
   },
   "theme": "buildbattle:normal",
   "players": {
-    "min": 4,
+    "min": 8,
     "max": 24
   },
-  "team_size": 1,
+  "team_size": 2,
   "time_limit_secs": 360,
   "voting_time_secs": 20
 }

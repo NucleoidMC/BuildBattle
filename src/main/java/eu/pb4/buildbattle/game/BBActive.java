@@ -1,6 +1,8 @@
 package eu.pb4.buildbattle.game;
 
+import eu.pb4.buildbattle.BuildBattle;
 import eu.pb4.buildbattle.custom.BBItems;
+import eu.pb4.buildbattle.custom.FloorChangingVillager;
 import eu.pb4.buildbattle.custom.VotingItem;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import eu.pb4.buildbattle.themes.Theme;
@@ -10,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -45,7 +48,7 @@ public class BBActive {
 
     public final Object2ObjectMap<PlayerRef, BBPlayer> participants;
     private final BBSpawnLogic spawnLogic;
-    private final BBStageManager stageManager;
+    public final BBStageManager stageManager;
     private final BBTimerBar timerBar;
 
     public final String theme;
@@ -59,6 +62,13 @@ public class BBActive {
         this.gameMap = map;
         this.spawnLogic = new BBSpawnLogic(gameSpace, map, this);
         this.participants = new Object2ObjectOpenHashMap<>();
+
+        for (BuildArena arena : map.buildArenas) {
+            FloorChangingVillager villager = new FloorChangingVillager(arena, this, this.gameSpace.getWorld());
+            villager.setPos(arena.villagerPos.x, arena.villagerPos.y, arena.villagerPos.z);
+            this.gameSpace.getWorld().spawnEntity(villager);
+        }
+
 
         Iterator<BuildArena> arenaIterator = map.buildArenas.iterator();
         BuildArena arena = arenaIterator.next();
@@ -106,6 +116,8 @@ public class BBActive {
             game.setRule(GameRule.THROW_ITEMS, RuleResult.DENY);
             game.setRule(GameRule.UNSTABLE_TNT, RuleResult.DENY);
 
+            game.setRule(BuildBattle.CREATIVE_LIMIT, RuleResult.ALLOW);
+
             game.on(GameOpenListener.EVENT, active::onOpen);
             game.on(GameCloseListener.EVENT, active::onClose);
 
@@ -116,10 +128,15 @@ public class BBActive {
             game.on(BreakBlockListener.EVENT, active::onBreakBlock);
             game.on(UseItemListener.EVENT, active::onItemUse);
             game.on(GameTickListener.EVENT, active::tick);
+            game.on(ExplosionListener.EVENT, active::onExplosion);
 
             game.on(PlayerDamageListener.EVENT, active::onPlayerDamage);
             game.on(PlayerDeathListener.EVENT, active::onPlayerDeath);
         });
+    }
+
+    private void onExplosion(List<BlockPos> blockPosList) {
+        blockPosList.clear();
     }
 
     private TypedActionResult<ItemStack> onItemUse(ServerPlayerEntity player, Hand hand) {
@@ -228,31 +245,39 @@ public class BBActive {
         ServerWorld world = this.gameSpace.getWorld();
         long time = world.getTime();
 
-        BBStageManager.IdleTickResult result = this.stageManager.tick(time, gameSpace);
+        BBStageManager.IdleTickResult result = this.stageManager.tick(time, this.gameSpace);
 
         switch (result) {
             case BUILD_WAIT:
-                gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                this.gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
                         .append(new TranslatableText("buildbattle.text.buildend").formatted(Formatting.GREEN)));
                 return;
             case BUILD_FINISHED_TICK:
                 this.votingArenaIterator = this.gameMap.buildArenas.iterator();
                 this.votingNextArena();
+
+                this.gameSpace.getPlayers().sendSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, SoundCategory.MASTER, 10f, 1);
                 return;
             case TICK_FINISHED:
                 return;
             case VOTE_NEXT:
                 if (this.votingNextArena()) {
-                    gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                    this.gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
                             .append(new TranslatableText("buildbattle.text.nextarea").formatted(Formatting.BLUE)));
+
+                    this.gameSpace.getPlayers().sendSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, SoundCategory.MASTER, 10f, 1);
                 }
                 return;
             case VOTE_WAIT:
                 this.countScore();
-                gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
-                        .append(new TranslatableText("buildbattle.text.votenext",
+                this.gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                        .append(new TranslatableText("buildbattle.text.buildby",
+                                this.votedArea.getBuilders(this)
+                        ).formatted(Formatting.AQUA)));
+                this.gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
+                        .append(new TranslatableText("buildbattle.text.buildscore",
                                 new LiteralText("" + this.votedArea.score).formatted(Formatting.GOLD)
-                        ).formatted(Formatting.YELLOW)));
+                        ).formatted(Formatting.LIGHT_PURPLE)));
                 return;
             case GAME_FINISHED:
                 this.broadcastWin();
