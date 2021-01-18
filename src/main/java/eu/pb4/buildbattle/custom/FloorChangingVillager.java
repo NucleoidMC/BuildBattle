@@ -2,16 +2,13 @@ package eu.pb4.buildbattle.custom;
 
 import eu.pb4.buildbattle.game.BBActive;
 import eu.pb4.buildbattle.game.map.BuildArena;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ChorusFlowerBlock;
-import net.minecraft.block.ChorusPlantBlock;
-import net.minecraft.block.PlantBlock;
+import net.minecraft.block.*;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.text.LiteralText;
+import net.minecraft.item.Items;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -19,7 +16,6 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.village.VillagerType;
 import net.minecraft.world.World;
-import xyz.nucleoid.plasmid.game.ManagedGameSpace;
 import xyz.nucleoid.plasmid.util.PlayerRef;
 
 public class FloorChangingVillager extends VillagerEntity {
@@ -30,7 +26,6 @@ public class FloorChangingVillager extends VillagerEntity {
         super(EntityType.VILLAGER, world, VillagerType.PLAINS);
         this.buildArena = null;
         this.game = null;
-
     }
 
     public FloorChangingVillager(BuildArena arena, BBActive game, World world) {
@@ -48,22 +43,47 @@ public class FloorChangingVillager extends VillagerEntity {
 
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
+        Item item = player.getStackInHand(hand).getItem();
+
         if (this.buildArena != null && this.game != null) {
-            Item item = player.getStackInHand(hand).getItem();
             if (this.buildArena.players.contains(this.game.participants.get(PlayerRef.of(player)))
-                    && item instanceof BlockItem
-                    && !(((BlockItem) item).getBlock() instanceof PlantBlock)
-                    && !(((BlockItem) item).getBlock() instanceof ChorusFlowerBlock)
-                    && !(((BlockItem) item).getBlock() instanceof ChorusPlantBlock)
                     && !this.game.stageManager.isVoting
                     && this.game.stageManager.waitTime == -1) {
 
-                BlockState blockState = ((BlockItem) player.getStackInHand(hand).getItem()).getBlock().getDefaultState();
+                BlockState blockState = null;
 
-                for (BlockPos blockPos : this.buildArena.ground) {
-                   this.world.setBlockState(blockPos, blockState);
+
+                if (item instanceof BlockItem) {
+                    Block block = ((BlockItem) item).getBlock();
+
+                    if (!(block instanceof ChorusFlowerBlock)
+                            && !(block instanceof ChorusPlantBlock)
+                            && !(block instanceof StoneButtonBlock)
+                            && !(block instanceof WoodenButtonBlock)
+                            && !(block instanceof LeverBlock)
+                            && !(block instanceof AbstractSkullBlock)
+                            && !(block instanceof DoorBlock)
+                            && !(block instanceof CactusBlock)
+                            && !(block instanceof SugarCaneBlock)
+                            && !(block instanceof VineBlock)
+                    ) {
+                        blockState = block.getDefaultState();
+                    }
+                } else if (item == Items.BUCKET) {
+                    blockState = Blocks.AIR.getDefaultState();
+                } else if (item == Items.WATER_BUCKET) {
+                    blockState = Blocks.WATER.getDefaultState();
+                } else if (item == Items.LAVA_BUCKET) {
+                    blockState = Blocks.LAVA.getDefaultState();
                 }
-                return ActionResult.SUCCESS;
+
+                if (blockState != null) {
+                    for (BlockPos blockPos : this.buildArena.ground) {
+                        this.world.setBlockState(blockPos, blockState);
+                    }
+
+                    return ActionResult.SUCCESS;
+                }
             }
         }
         return ActionResult.FAIL;

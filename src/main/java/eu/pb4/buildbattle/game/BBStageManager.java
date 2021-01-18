@@ -7,7 +7,6 @@ public class BBStageManager {
     public long finishTime = -1;
     public long finishDiffTime = -1;
     public long waitTime = -1;
-    private long startTime = -1;
     public long votingTime = -1;
 
     public boolean isVoting = false;
@@ -20,10 +19,9 @@ public class BBStageManager {
     }
 
     public void onOpen(long time, BBConfig config) {
-        this.startTime = time - (time % 20);
-        this.finishTime = this.startTime + (config.timeLimitSecs * 20);
-        this.finishDiffTime = config.timeLimitSecs * 20;
-        this.votingTime = config.votingTimeSecs * 20;
+        this.finishTime = time - (time % 20) + ((long) config.timeLimitSecs * 20);
+        this.finishDiffTime = (long) config.timeLimitSecs * 20;
+        this.votingTime = (long) config.votingTimeSecs * 20;
     }
 
     public IdleTickResult tick(long time, GameSpace space) {

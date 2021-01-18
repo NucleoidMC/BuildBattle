@@ -1,0 +1,17 @@
+{
+  "type": "buildbattle:buildbattle",
+  "name": "Mini Build Battle",
+  "map": {
+    "id": "buildbattle:arena_small",
+    "waitId": "buildbattle:wait"
+  },
+  "theme": "buildbattle:normal",
+  "players": {
+    "min": 2,
+    "threshold": 4,
+    "max": 24
+  },
+  "team_size": 1,
+  "time_limit_secs": 300,
+  "voting_time_secs": 20
+}
