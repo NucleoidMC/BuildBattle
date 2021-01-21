@@ -12,13 +12,13 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.projectile.FireworkRocketEntity;
+import net.minecraft.item.FireworkItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.TranslatableText;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.*;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
@@ -28,6 +28,7 @@ import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.game.player.PlayerSet;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
 import xyz.nucleoid.plasmid.game.rule.RuleResult;
+import xyz.nucleoid.plasmid.util.ItemUtil;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 import xyz.nucleoid.plasmid.util.PlayerRef;
 import net.minecraft.entity.damage.DamageSource;
@@ -36,7 +37,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.world.GameMode;
 import eu.pb4.buildbattle.game.map.BBMap;
 
@@ -72,6 +72,9 @@ public class BBActive {
 
         Iterator<BuildArena> arenaIterator = map.buildArenas.iterator();
         BuildArena arena = arenaIterator.next();
+
+        ArrayList<PlayerRef> randomPlayers = new ArrayList(participants);
+        Collections.shuffle(randomPlayers);
 
         for (PlayerRef player : participants) {
             if (arena.players.size() >= this.config.teamSize) {
@@ -276,6 +279,19 @@ public class BBActive {
                 return;
             case TICK_FINISHED:
                 return;
+            case GAME_WAIT_FOR_CLOSING:
+                if (time % 20 == 0) {
+
+                    for (BBPlayer bbPlayer : this.votedArea.players ) {
+                        ItemStack itemStack = ItemUtil.createFirework(DyeColor.byId(Math.round((float) Math.random() * 15)).getFireworkColor(), 1, FireworkItem.Type.LARGE_BALL);
+                        ServerPlayerEntity player = bbPlayer.playerRef.getEntity(world);
+                        FireworkRocketEntity entity = new FireworkRocketEntity(world, player.getX(), player.getY() + 2, player.getZ(), itemStack);
+                        entity.noClip = true;
+                        entity.addVelocity(0, 0.2, 0);
+                        world.spawnEntity(entity);
+                    }
+                }
+                break;
             case VOTE_NEXT:
                 if (this.votingNextArena()) {
                     this.gameSpace.getPlayers().sendMessage(new LiteralText("» ").formatted(Formatting.GRAY)
@@ -296,7 +312,7 @@ public class BBActive {
                         ).formatted(Formatting.LIGHT_PURPLE)));
                 return;
             case GAME_FINISHED:
-                this.broadcastWin();
+                this.endGameAndBroadcastWin();
                 return;
             case GAME_CLOSED:
                 this.gameSpace.close(GameCloseReason.FINISHED);
@@ -335,7 +351,7 @@ public class BBActive {
         return false;
     }
 
-    private void broadcastWin() {
+    private void endGameAndBroadcastWin() {
         List<BuildArena> buildArenaList = this.gameMap.buildArenas.stream()
                 .sorted(Comparator.comparingDouble(p -> -p.score))
                 .collect(Collectors.toList());
@@ -372,6 +388,10 @@ public class BBActive {
             }
         }
 
+        for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+            this.votedArea = buildArenaList.get(0);
+            this.votedArea.teleportPlayer(player);
+        }
         players.sendSound(SoundEvents.ENTITY_VILLAGER_YES);
     }
 }

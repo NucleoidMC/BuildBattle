@@ -30,7 +30,7 @@ public class BBStageManager {
             if (time >= this.closeTime) {
                 return IdleTickResult.GAME_CLOSED;
             }
-            return IdleTickResult.TICK_FINISHED;
+            return IdleTickResult.GAME_WAIT_FOR_CLOSING;
         }
 
 
@@ -82,6 +82,7 @@ public class BBStageManager {
         VOTE_NEXT,
         GAME_FINISHED,
         TICK_FINISHED,
+        GAME_WAIT_FOR_CLOSING,
         GAME_CLOSED,
     }
 }

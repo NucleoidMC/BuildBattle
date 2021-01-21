@@ -4,12 +4,12 @@
     "id": "buildbattle:arena_medium",
     "waitId": "buildbattle:wait"
   },
-  "theme": "buildbattle:test",
+  "theme": "buildbattle:normal",
   "players": {
     "min": 1,
     "max": 24
   },
   "team_size": 1,
-  "time_limit_secs": 60,
-  "voting_time_secs": 20
+  "time_limit_secs": 10,
+  "voting_time_secs": 10
 }

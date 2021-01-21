@@ -36,11 +36,7 @@ public class BBSpawnLogic {
 
         if (this.game != null) {
             if (this.game.votedArea != null) {
-                double x = MathHelper.nextDouble(player.getRandom(), this.game.votedArea.spawn.getMin().getX(), this.game.votedArea.spawn.getMax().getX());
-                double y = this.game.votedArea.spawn.getMin().getY();
-                double z = MathHelper.nextDouble(player.getRandom(), this.game.votedArea.spawn.getMin().getZ(), this.game.votedArea.spawn.getMax().getZ());
-
-                player.teleport(world, x, y, z, player.yaw, player.pitch);
+                this.game.votedArea.teleportPlayer(player);
                 return;
             }
 

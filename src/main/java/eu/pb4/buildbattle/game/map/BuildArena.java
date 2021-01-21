@@ -3,13 +3,14 @@ package eu.pb4.buildbattle.game.map;
 import eu.pb4.buildbattle.custom.FloorChangingVillager;
 import eu.pb4.buildbattle.game.BBActive;
 import eu.pb4.buildbattle.game.BBPlayer;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.plasmid.util.BlockBounds;
 import xyz.nucleoid.plasmid.util.PlayerRef;
@@ -75,5 +76,14 @@ public class BuildArena {
             this.game.gameSpace.getWorld().spawnEntity(villager);
             this.villager = villager;
         }
+    }
+
+
+    public void teleportPlayer(ServerPlayerEntity player) {
+        double x = MathHelper.nextDouble(player.getRandom(), this.game.votedArea.spawn.getMin().getX(), this.game.votedArea.spawn.getMax().getX());
+        double y = this.game.votedArea.spawn.getMin().getY();
+        double z = MathHelper.nextDouble(player.getRandom(), this.game.votedArea.spawn.getMin().getZ(), this.game.votedArea.spawn.getMax().getZ());
+
+        player.teleport(game.gameSpace.getWorld(), x, y, z, player.yaw, player.pitch);
     }
 }
