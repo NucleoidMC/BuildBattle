@@ -25,6 +25,8 @@ public class BBMapBuilder {
         try {
             MapTemplate templateWait = MapTemplateSerializer.INSTANCE.loadFromResource(this.config.waitId);
             BlockBounds waitSpawn = templateWait.getMetadata().getFirstRegionBounds("wait_spawn");
+            BlockBounds waitInfoArea = templateWait.getMetadata().getFirstRegionBounds("wait_info");
+
             MapTemplate templateArea = MapTemplateSerializer.INSTANCE.loadFromResource(this.config.templateId);
 
             MapTemplate template = MapTemplate.createEmpty();
@@ -52,7 +54,7 @@ public class BBMapBuilder {
             }
 
 
-            BBMap map = new BBMap(template, config.mapConfig, buildArenas, waitSpawn);
+            BBMap map = new BBMap(template, config.mapConfig, buildArenas, waitSpawn, waitInfoArea);
             template.setBiome(BiomeKeys.FOREST);
 
             return map;

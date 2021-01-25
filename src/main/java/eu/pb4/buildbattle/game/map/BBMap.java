@@ -15,12 +15,14 @@ public class BBMap {
     private final BBMapConfig config;
     public final Set<BuildArena> buildArenas;
     public final BlockBounds waitSpawn;
+    public final BlockBounds waitInfoArea;
 
-    public BBMap(MapTemplate template, BBMapConfig config, Set<BuildArena> buildArenaSet, BlockBounds waitSpawn) {
+    public BBMap(MapTemplate template, BBMapConfig config, Set<BuildArena> buildArenaSet, BlockBounds waitSpawn, BlockBounds waitInfoArea) {
         this.template = template;
         this.config = config;
         this.buildArenas = buildArenaSet;
         this.waitSpawn = waitSpawn;
+        this.waitInfoArea = waitInfoArea;
     }
 
     public ChunkGenerator asGenerator(MinecraftServer server) {

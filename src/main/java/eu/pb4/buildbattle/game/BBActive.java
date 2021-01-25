@@ -5,6 +5,7 @@ import eu.pb4.buildbattle.Helper;
 import eu.pb4.buildbattle.custom.BBItems;
 import eu.pb4.buildbattle.custom.FloorChangingVillager;
 import eu.pb4.buildbattle.custom.VotingItem;
+import eu.pb4.buildbattle.event.BBPlayerFluidPlaceListener;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import eu.pb4.buildbattle.themes.Theme;
 import eu.pb4.buildbattle.themes.ThemesRegistry;
@@ -19,6 +20,7 @@ import net.minecraft.item.ItemUsageContext;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.*;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
@@ -133,6 +135,7 @@ public class BBActive {
             game.on(AttackEntityListener.EVENT, active::onEntityDamage);
             game.on(GameTickListener.EVENT, active::tick);
             game.on(ExplosionListener.EVENT, active::onExplosion);
+            game.on(BBPlayerFluidPlaceListener.EVENT, active::onFluidPlace);
 
             game.on(PlayerDamageListener.EVENT, active::onPlayerDamage);
             game.on(PlayerDeathListener.EVENT, active::onPlayerDeath);
@@ -180,14 +183,14 @@ public class BBActive {
     }
 
     private ActionResult onBreakBlock(ServerPlayerEntity serverPlayerEntity, BlockPos blockPos) {
-        if (this.stageManager.isVoting) {
+        if (this.stageManager.isVoting || this.stageManager.waitTime > -1) {
             return ActionResult.FAIL;
         }
 
         BuildArena buildArena = this.gameMap.getBuildArea(blockPos);
         BBPlayer bbPlayer = this.participants.get(PlayerRef.of(serverPlayerEntity));
 
-        if (buildArena != null && bbPlayer != null && this.stageManager.waitTime <= -1 && buildArena.canBuild(blockPos, bbPlayer)) {
+        if (buildArena != null && bbPlayer != null && buildArena.canBuild(blockPos, bbPlayer)) {
             return ActionResult.SUCCESS;
         }
 
@@ -195,14 +198,29 @@ public class BBActive {
     }
 
     private ActionResult onPlaceBlock(ServerPlayerEntity serverPlayerEntity, BlockPos blockPos, BlockState blockState, ItemUsageContext itemUsageContext) {
-        if (this.stageManager.isVoting) {
+        if (this.stageManager.isVoting || this.stageManager.waitTime > -1) {
             return ActionResult.FAIL;
         }
 
         BuildArena buildArena = this.gameMap.getBuildArea(blockPos);
         BBPlayer bbPlayer = this.participants.get(PlayerRef.of(serverPlayerEntity));
 
-        if (buildArena != null && bbPlayer != null && this.stageManager.waitTime <= -1 && buildArena.canBuild(blockPos, bbPlayer)) {
+        if (buildArena != null && bbPlayer != null && buildArena.canBuild(blockPos, bbPlayer)) {
+            return ActionResult.SUCCESS;
+        }
+
+        return ActionResult.FAIL;
+    }
+
+    private ActionResult onFluidPlace(ServerPlayerEntity player, BlockPos blockPos, BlockHitResult blockHitResult) {
+        if (this.stageManager.isVoting || this.stageManager.waitTime > -1) {
+            return ActionResult.FAIL;
+        }
+
+        BuildArena buildArena = this.gameMap.getBuildArea(blockPos);
+        BBPlayer bbPlayer = this.participants.get(PlayerRef.of(player));
+
+        if (buildArena != null && bbPlayer != null && buildArena.canBuild(blockPos, bbPlayer)) {
             return ActionResult.SUCCESS;
         }
 

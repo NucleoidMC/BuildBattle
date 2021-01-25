@@ -25,6 +25,25 @@
   "buildbattle.ordinal.th": "th",
   "buildbattle.ordinal.st": "st",
   "buildbattle.ordinal.nd": "nd",
-  "buildbattle.ordinal.rd": "rd"
+  "buildbattle.ordinal.rd": "rd",
+
+
+  "buildbattle.about.standard.1": "You have %s minutes to build",
+  "buildbattle.about.standard.2": "something related to given theme!",
+  "buildbattle.about.standard.3": "After time ends, you vote ",
+  "buildbattle.about.standard.4": "for other players buildings.",
+  "buildbattle.about.standard.5": "Best builder wins!",
+  "buildbattle.about.standard.6": "",
+  "buildbattle.about.standard.7": "",
+  "buildbattle.about.standard.8": "",
+
+  "buildbattle.about.buildswap.1": "You have %s minutes to build",
+  "buildbattle.about.buildswap.2": "something related to given theme!",
+  "buildbattle.about.buildswap.3": "After this time ends, you will get",
+  "buildbattle.about.buildswap.4": "assigned to other player's build ",
+  "buildbattle.about.buildswap.5": "with a task of modifying it to",
+  "buildbattle.about.buildswap.6": "new selected theme (while keeping old one)",
+  "buildbattle.about.buildswap.7": "Best builders win!",
+  "buildbattle.about.buildswap.8": ""
 
 }

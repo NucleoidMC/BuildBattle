@@ -2,6 +2,8 @@ package eu.pb4.buildbattle;
 
 import eu.pb4.buildbattle.themes.ThemesRegistry;
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import xyz.nucleoid.plasmid.game.GameType;
 import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;

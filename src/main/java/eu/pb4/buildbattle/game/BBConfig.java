@@ -13,7 +13,8 @@ public class BBConfig {
             Codec.INT.fieldOf("time_limit_secs").forGetter(config -> config.timeLimitSecs),
             Codec.INT.fieldOf("voting_time_secs").forGetter(config -> config.timeLimitSecs),
             Codec.INT.fieldOf("team_size").forGetter(config -> config.teamSize),
-            Identifier.CODEC.fieldOf("theme").forGetter(config -> config.theme)
+            Identifier.CODEC.fieldOf("theme").forGetter(config -> config.theme),
+            Codec.BOOL.optionalFieldOf("buildswap", false).forGetter(config -> config.isBuildSwap)
         ).apply(instance, BBConfig::new));
 
     public final PlayerConfig playerConfig;
@@ -22,13 +23,15 @@ public class BBConfig {
     public final int votingTimeSecs;
     public final int teamSize;
     public final Identifier theme;
+    public final boolean isBuildSwap;
 
-    public BBConfig(PlayerConfig players, BBMapConfig mapConfig, int timeLimitSecs, int votingTimeSecs, int teamSize, Identifier theme) {
+    public BBConfig(PlayerConfig players, BBMapConfig mapConfig, int timeLimitSecs, int votingTimeSecs, int teamSize, Identifier theme, boolean buildswap) {
         this.playerConfig = players;
         this.mapConfig = mapConfig;
         this.timeLimitSecs = timeLimitSecs;
         this.votingTimeSecs = votingTimeSecs;
         this.teamSize = teamSize;
         this.theme = theme;
+        this.isBuildSwap = buildswap;
     }
 }

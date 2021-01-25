@@ -13,7 +13,10 @@
     "MinecartItemMixin",
     "BoatItemMixin",
     "PistonBlockMixin",
-    "EnderEyeItemMixin"
+    "EnderEyeItemMixin",
+    "EnderPearlItemMixin",
+    "BucketItemMixin",
+    "ChorusFruitItemMixin"
   ],
   "injectors": {
     "defaultRequire": 0
