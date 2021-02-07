@@ -303,10 +303,12 @@ public class BBActive {
                     for (BBPlayer bbPlayer : this.votedArea.players ) {
                         ItemStack itemStack = ItemUtil.createFirework(DyeColor.byId(Math.round((float) Math.random() * 15)).getFireworkColor(), 1, FireworkItem.Type.LARGE_BALL);
                         ServerPlayerEntity player = bbPlayer.playerRef.getEntity(world);
-                        FireworkRocketEntity entity = new FireworkRocketEntity(world, player.getX(), player.getY() + 2, player.getZ(), itemStack);
-                        entity.noClip = true;
-                        entity.addVelocity(0, 0.2, 0);
-                        world.spawnEntity(entity);
+                        if (player != null) {
+                            FireworkRocketEntity entity = new FireworkRocketEntity(world, player.getX(), player.getY() + 2, player.getZ(), itemStack);
+                            entity.noClip = true;
+                            entity.addVelocity(0, 0.2, 0);
+                            world.spawnEntity(entity);
+                        }
                     }
                 }
                 break;
