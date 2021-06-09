@@ -1,4 +1,5 @@
 {
+  "game.buildbattle.buildbattle": "Build Battle",
   "buildbattle.text.theme": "Theme of this Build Battle is: %s",
   "buildbattle.text.buildend": "Building time has ended!",
   "buildbattle.text.buildby": "Built by %s",
