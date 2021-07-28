@@ -228,7 +228,6 @@ public class BuildingStage {
                 stack.setTag(nbt);
             }
 
-            Blocks.NETHERRACK
             GeneralUtils.setCreativeStack(packet1, stack);
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(player.playerScreenHandler.syncId, 0, packet1.getSlot(), stack));
         }
