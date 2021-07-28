@@ -4,19 +4,12 @@
   "package": "eu.pb4.buildbattle.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "ServerPlayNetworkHandlerMixin",
-    "WitherSkullBlockMixin",
-    "SpawnEggItemMixin",
-    "DispenserBlockMixin",
-    "ArmorStandItemMixin",
-    "FishBucketItemMixin",
-    "MinecartItemMixin",
-    "BoatItemMixin",
-    "PistonBlockMixin",
-    "EnderEyeItemMixin",
-    "EnderPearlItemMixin",
     "BucketItemMixin",
-    "ChorusFruitItemMixin"
+    "CreativeActionPacketAccessor",
+    "DispenserBlockMixin",
+    "EntityBucketItemMixin",
+    "PistonBlockMixin",
+    "VillagerEntityAccessor"
   ],
   "injectors": {
     "defaultRequire": 0

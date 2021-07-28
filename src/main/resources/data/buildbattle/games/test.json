@@ -1,8 +1,9 @@
 {
   "type": "buildbattle:buildbattle",
   "map": {
-    "id": "buildbattle:arena_medium",
-    "waitId": "buildbattle:wait"
+    "arena": "buildbattle:arena_medium",
+    "lobby": "buildbattle:wait",
+    "entity_rotation": -45
   },
   "theme": "buildbattle:normal",
   "players": {
@@ -10,6 +11,6 @@
     "max": 24
   },
   "team_size": 1,
-  "time_limit_secs": 10,
-  "voting_time_secs": 10
+  "time_limit_secs": 15,
+  "voting_time_secs": 15
 }

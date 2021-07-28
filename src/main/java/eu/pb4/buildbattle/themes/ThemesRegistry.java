@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public class ThemesRegistry {
-    private static final TinyRegistry<Theme> THEMES = TinyRegistry.newStable();
+    private static final TinyRegistry<Theme> THEMES = TinyRegistry.create();
 
     public static void register() {
         ResourceManagerHelper serverData = ResourceManagerHelper.get(ResourceType.SERVER_DATA);
@@ -39,7 +39,7 @@ public class ThemesRegistry {
             }
 
             @Override
-            public void apply(ResourceManager manager) {
+            public void reload(ResourceManager manager) {
                 THEMES.clear();
 
                 Collection<Identifier> resources = manager.findResources("themes", path -> path.endsWith(".json"));
@@ -54,13 +54,9 @@ public class ThemesRegistry {
 
                             DataResult<Theme> result = Theme.CODEC.decode(JsonOps.INSTANCE, json).map(Pair::getFirst);
 
-                            result.result().ifPresent(game -> {
-                                THEMES.register(identifier, game);
-                            });
+                            result.result().ifPresent(game -> THEMES.register(identifier, game));
 
-                            result.error().ifPresent(error -> {
-                                BuildBattle.LOGGER.error("Failed to decode game at {}: {}", path, error.toString());
-                            });
+                            result.error().ifPresent(error -> BuildBattle.LOGGER.error("Failed to decode game at {}: {}", path, error.toString()));
                         }
                     } catch (IOException e) {
                         BuildBattle.LOGGER.error("Failed to read configured game at {}", path, e);

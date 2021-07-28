@@ -1,10 +1,9 @@
 {
   "type": "buildbattle:buildbattle",
-  "name": "Build Battle",
+  "name": "Build Swap",
   "map": {
-    "arena": "buildbattle:arena_medium",
-    "lobby": "buildbattle:wait",
-    "entity_rotation": -45
+    "id": "buildbattle:arena_medium",
+    "waitId": "buildbattle:wait"
   },
   "theme": "buildbattle:normal",
   "players": {
@@ -14,5 +13,6 @@
   },
   "team_size": 1,
   "time_limit_secs": 480,
-  "voting_time_secs": 20
+  "voting_time_secs": 20,
+  "buildswap": true
 }

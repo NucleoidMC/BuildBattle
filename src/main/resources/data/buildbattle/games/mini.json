@@ -2,8 +2,9 @@
   "type": "buildbattle:buildbattle",
   "name": "Mini Build Battle",
   "map": {
-    "id": "buildbattle:arena_small",
-    "waitId": "buildbattle:wait"
+    "arena": "buildbattle:arena_small",
+    "lobby": "buildbattle:wait",
+    "entity_rotation": -45
   },
   "theme": "buildbattle:normal",
   "players": {
