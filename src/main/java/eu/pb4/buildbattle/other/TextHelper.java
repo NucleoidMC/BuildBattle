@@ -1,11 +1,12 @@
 package eu.pb4.buildbattle.other;
 
 import eu.pb4.buildbattle.game.BuildBattleConfig;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
-import net.minecraft.util.Formatting;
+import eu.pb4.holograms.api.elements.HologramElement;
+import eu.pb4.holograms.api.elements.SpacingHologramElement;
+import eu.pb4.holograms.api.elements.item.SpinningItemHologramElement;
+import eu.pb4.holograms.api.elements.text.StaticTextHologramElement;
+import net.minecraft.item.Items;
+import net.minecraft.text.*;
 import xyz.nucleoid.plasmid.game.GameSpace;
 
 import java.util.ArrayList;
@@ -25,15 +26,16 @@ public class TextHelper {
     }
 
 
-    public static Text[] getAboutHologramText(GameSpace game, BuildBattleConfig config) {
-        ArrayList<Text> out = new ArrayList<>();
-        out.add(new LiteralText("").append(game.getSourceConfig().getName()).formatted(Formatting.GOLD));
-
+    public static HologramElement[] getHologramLines(GameSpace game, BuildBattleConfig config) {
+        ArrayList<HologramElement> out = new ArrayList<>();
+        out.add(new SpinningItemHologramElement(Items.BRICK.getDefaultStack()));
+        out.add(new StaticTextHologramElement(new LiteralText("").append(game.getSourceConfig().getName()).setStyle(Style.EMPTY.withColor(0xffae36).withBold(true))));
+        out.add(new SpacingHologramElement(0.2f));
         String type = "standard";
-        for (int x = 1; x <= 8; x++) {
-            out.add(new TranslatableText("text.buildbattle.about." + type + "." + x, (config.timeLimitSecs() / 60)));
+        for (int x = 1; x <= 7; x++) {
+            out.add(new StaticTextHologramElement(new TranslatableText("text.buildbattle.about." + type + "." + x, (config.timeLimitSecs() / 60))));
         }
 
-        return out.toArray(new Text[0]);
+        return out.toArray(new HologramElement[0]);
     }
 }

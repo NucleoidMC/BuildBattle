@@ -43,10 +43,7 @@ public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfi
             game.listen(GamePlayerEvents.OFFER, offer -> offer.accept(world, Vec3d.ZERO));
             game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof MobEntity && !(x instanceof FloorChangingEntity) ? ActionResult.FAIL : ActionResult.PASS);
 
-
-            world.getChunk(new BlockPos(0, 0, 0));
-
-            Holograms.create(world, waitingMap.hologramPos, TextHelper.getAboutHologramText(game.getGameSpace(), config));
+            Holograms.create(world, waitingMap.hologramPos, TextHelper.getHologramLines(game.getGameSpace(), config)).show();
         });
     }
 
