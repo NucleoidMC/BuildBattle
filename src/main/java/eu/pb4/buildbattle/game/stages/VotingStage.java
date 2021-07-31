@@ -84,7 +84,7 @@ public class VotingStage {
     }
 
     public static void open(GameSpace gameSpace, GameplayMap map, ServerWorld world, String theme, Object2ObjectMap<PlayerRef, PlayerData> participants, BuildBattleConfig config) {
-        gameSpace.setActivity(gameSpace.getSourceConfig(), game -> {
+        gameSpace.setActivity(game -> {
             GlobalWidgets widgets = GlobalWidgets.addTo(game);
             VotingStage active = new VotingStage(gameSpace, world, map, widgets, config, theme, participants);
 

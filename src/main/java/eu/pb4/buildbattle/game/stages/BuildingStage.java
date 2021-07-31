@@ -154,7 +154,7 @@ public class BuildingStage {
 
         ServerWorld world = gameSpace.addWorld(worldConfig);
 
-        gameSpace.setActivity(gameSpace.getSourceConfig(), game -> {
+        gameSpace.setActivity(game -> {
             GlobalWidgets widgets = GlobalWidgets.addTo(game);
             BuildingStage active = new BuildingStage(gameSpace, world, map, widgets, config, participants);
 
