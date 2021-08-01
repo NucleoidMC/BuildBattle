@@ -412,7 +412,9 @@ public class BuildingStage {
                         ParticleEffect effect = new DustParticleEffect(new Vec3f(0.8f, 0.8f, 0.8f), 2.0F);
                         for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
                             PlayerData data = this.participants.get(PlayerRef.of(player));
-                            ParticleOutlineRenderer.render(player, data.arena.buildingArea.min(), data.arena.buildingArea.max().add(1, 1, 1), effect);
+                            if (data != null) {
+                                ParticleOutlineRenderer.render(player, data.arena.buildingArea.min(), data.arena.buildingArea.max().add(1, 1, 1), effect);
+                            }
                         }
                     }
                 }
