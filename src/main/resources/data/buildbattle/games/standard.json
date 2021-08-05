@@ -2,7 +2,7 @@
   "type": "buildbattle:buildbattle",
   "name": "Build Battle",
   "map": {
-    "arena": "buildbattle:arena_medium",
+    "arena": "buildbattle:ompa",
     "lobby": "buildbattle:wait",
     "entity_rotation": -45
   },

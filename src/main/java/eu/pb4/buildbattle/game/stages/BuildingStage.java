@@ -36,6 +36,7 @@ import net.minecraft.util.*;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3f;
 import net.minecraft.util.registry.Registry;
@@ -63,6 +64,7 @@ import xyz.nucleoid.stimuli.event.player.PlayerAttackEntityEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerC2SPacketEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 import xyz.nucleoid.stimuli.event.world.ExplosionDetonatedEvent;
+import xyz.nucleoid.stimuli.event.world.FluidFlowEvent;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -186,6 +188,7 @@ public class BuildingStage {
             game.listen(PlayerAttackEntityEvent.EVENT, active::onEntityDamage);
             game.listen(GameActivityEvents.TICK, active::tick);
             game.listen(ExplosionDetonatedEvent.EVENT, active::onExplosion);
+            game.listen(FluidFlowEvent.EVENT, active::onFluidFlow);
 
             game.listen(PlayerC2SPacketEvent.EVENT, active::onClientPacket);
 
@@ -193,6 +196,16 @@ public class BuildingStage {
 
             game.listen(EntitySpawnEvent.EVENT, active::onEntitySpawn);
         });
+    }
+
+    private ActionResult onFluidFlow(ServerWorld world, BlockPos blockPos, BlockState state, Direction direction, BlockPos blockPos1, BlockState state1) {
+        var arena = this.gameMap.getArena(blockPos1);
+
+        if (arena != null && arena.buildingArea.contains(blockPos1)) {
+            return ActionResult.PASS;
+        }
+
+        return ActionResult.FAIL;
     }
 
     private ActionResult onEntitySpawn(Entity entity) {
