@@ -16,11 +16,10 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.BiConsumer;
 
 public class ThemeVotingManager {
     private final Object2IntMap<String> votes = new Object2IntArrayMap<>();
@@ -59,9 +58,16 @@ public class ThemeVotingManager {
             gui.close();
         }
 
-        List<Object2IntMap.Entry<String>> toSort = new ArrayList<>(this.votes.object2IntEntrySet());
-        toSort.sort((entry, x) -> -entry.getIntValue());
-        return toSort.get(0).getKey();
+        String theme = null;
+        int count = 0;
+
+        for (var entry : this.votes.object2IntEntrySet()) {
+            if (entry.getIntValue() > count || (entry.getIntValue() == count && Math.random() > 0.5)) {
+                theme = entry.getKey();
+                count = entry.getIntValue();
+            }
+        }
+        return theme;
     }
 
     private class Gui extends SimpleGui {

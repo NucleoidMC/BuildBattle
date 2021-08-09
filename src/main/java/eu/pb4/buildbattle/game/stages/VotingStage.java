@@ -9,6 +9,7 @@ import eu.pb4.buildbattle.game.TimerBar;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import eu.pb4.buildbattle.game.map.GameplayMap;
 import eu.pb4.buildbattle.other.FormattingUtil;
+import eu.pb4.buildbattle.other.MarkedPacket;
 import eu.pb4.buildbattle.other.TextHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.entity.EquipmentSlot;
@@ -17,7 +18,6 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.item.FireworkItem;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket;
@@ -47,10 +47,7 @@ import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerS2CPacketEvent;
 import xyz.nucleoid.stimuli.event.world.ExplosionDetonatedEvent;
 
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class VotingStage {
@@ -116,10 +113,22 @@ public class VotingStage {
         });
     }
 
-    private ActionResult onServerPacket(ServerPlayerEntity playerEntity, Packet<?> packet) {
+    private ActionResult onServerPacket(ServerPlayerEntity player, Packet<?> packet) {
+        if (MarkedPacket.is(packet)) {
+            return ActionResult.PASS;
+        }
+
         if (packet instanceof EntityEquipmentUpdateS2CPacket equipmentUpdate) {
-            equipmentUpdate.getEquipmentList().removeIf((p) -> p.getFirst().getType() == EquipmentSlot.Type.HAND);
-            equipmentUpdate.getEquipmentList().add(new Pair<>(EquipmentSlot.MAINHAND, ItemStack.EMPTY));
+            for (var pair : equipmentUpdate.getEquipmentList()) {
+                if (pair.getFirst() == EquipmentSlot.MAINHAND) {
+                    var list = new ArrayList<>(equipmentUpdate.getEquipmentList());
+                    list.remove(pair);
+                    list.add(new Pair<>(EquipmentSlot.MAINHAND, ItemStack.EMPTY));
+
+                    player.networkHandler.sendPacket(MarkedPacket.mark(new EntityEquipmentUpdateS2CPacket(equipmentUpdate.getId(), list)));
+                    return ActionResult.FAIL;
+                }
+            }
         }
 
         return ActionResult.PASS;
@@ -155,7 +164,8 @@ public class VotingStage {
             this.spawnParticipant(player);
         } else {
             this.spawnSpectator(player);
-        }    }
+        }
+    }
 
     private void removePlayer(ServerPlayerEntity player) {
 
