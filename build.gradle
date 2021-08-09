@@ -14,11 +14,6 @@ repositories {
     mavenLocal()
     maven { url = "https://jitpack.io/" }
     maven { url = "https://maven.nucleoid.xyz/" }
-
-    maven {
-        name = "TomTheGeek-repo"
-        url = "https://maven.tomthegeek.ml/releases/"
-    }
 }
 
 dependencies {
