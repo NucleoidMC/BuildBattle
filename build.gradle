@@ -36,8 +36,6 @@ dependencies {
     modRuntime("com.github.SuperCoder7979:databreaker:0.2.6") {
         exclude module: "fabric-loader"
     }
-
-    modRuntime "com.github.tom_the_geek:wdmnf:1.0.0+mc.1.17"
 }
 
 processResources {
