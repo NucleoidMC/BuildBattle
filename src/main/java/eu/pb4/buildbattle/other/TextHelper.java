@@ -28,12 +28,12 @@ public class TextHelper {
 
     public static HologramElement[] getHologramLines(GameSpace game, BuildBattleConfig config) {
         ArrayList<HologramElement> out = new ArrayList<>();
-        out.add(new SpinningItemHologramElement(Items.BRICK.getDefaultStack()));
-        out.add(new StaticTextHologramElement(new LiteralText("").append(game.getSourceConfig().getName()).setStyle(Style.EMPTY.withColor(0xffae36).withBold(true))));
+        out.add(new SpinningItemHologramElement(game.getMetadata().sourceConfig().icon()));
+        out.add(new StaticTextHologramElement(new LiteralText("").append(game.getMetadata().sourceConfig().name()).setStyle(Style.EMPTY.withColor(0xffae36).withBold(true))));
         out.add(new SpacingHologramElement(0.2f));
-        String type = "standard";
+        String type = config.gamemode();
         for (int x = 1; x <= 7; x++) {
-            out.add(new StaticTextHologramElement(new TranslatableText("text.buildbattle.about." + type + "." + x, (config.timeLimitSecs() / 60))));
+            out.add(new StaticTextHologramElement(new TranslatableText("description.buildbattle." + type + "." + x, (config.timeLimitSecs() / 60))));
         }
 
         return out.toArray(new HologramElement[0]);

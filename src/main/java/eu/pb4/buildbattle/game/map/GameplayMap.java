@@ -44,7 +44,7 @@ public class GameplayMap {
                         break;
                     }
                     count++;
-                    MapTemplate translated = templateArea.translated((x - half) * sizeX, 0, (z - half) * sizeZ);
+                    MapTemplate translated = templateArea.translated((x - half) * sizeX * 2, 0, (z - half) * sizeZ * 2);
                     MapTemplateMetadata meta = translated.getMetadata();
 
                     this.buildArena.add(new BuildArena(

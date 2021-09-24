@@ -8,6 +8,7 @@
     "CreativeActionPacketAccessor",
     "DispenserBlockMixin",
     "EntityBucketItemMixin",
+    "ItemUsageContextAccessor",
     "PacketMixin",
     "PistonBlockMixin",
     "VillagerEntityAccessor"

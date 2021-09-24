@@ -1,6 +1,17 @@
 {
   "type": "buildbattle:buildbattle",
-  "name": "Mini Build Battle",
+  "gamemode": "standard",
+  "name": {
+    "translate": "gameType.buildbattle.mini"
+  },
+  "description": [
+    "<yellow><lang:'description.buildbattle.standard.1':'5'>",
+    "<yellow><lang:'description.buildbattle.standard.2'>",
+    "<yellow><lang:'description.buildbattle.standard.3'>",
+    "<yellow><lang:'description.buildbattle.standard.4'>",
+    "<yellow><lang:'description.buildbattle.standard.5'>"
+  ],
+  "icon": "brick",
   "map": {
     "arena": "buildbattle:arena_small",
     "lobby": "buildbattle:wait",

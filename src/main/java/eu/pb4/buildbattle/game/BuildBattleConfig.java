@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public record BuildBattleConfig(PlayerConfig playerConfig,
                                 MapConfig mapConfig, int timeLimitSecs, int votingTimeSecs,
-                                int teamSize, Identifier theme, boolean themeVoting, Optional<String> forcedTheme) {
+                                int teamSize, Identifier theme, boolean themeVoting, Optional<String> forcedTheme, String gamemode) {
 
     public static final Codec<BuildBattleConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             PlayerConfig.CODEC.fieldOf("players").forGetter(config -> config.playerConfig),
@@ -20,6 +20,7 @@ public record BuildBattleConfig(PlayerConfig playerConfig,
             Codec.INT.fieldOf("team_size").forGetter(config -> config.teamSize),
             Identifier.CODEC.fieldOf("theme").forGetter(config -> config.theme),
             Codec.BOOL.optionalFieldOf("theme_voting", true).forGetter(config -> config.themeVoting),
-            Codec.STRING.optionalFieldOf("forced_theme").forGetter(config -> config.forcedTheme)
+            Codec.STRING.optionalFieldOf("forced_theme").forGetter(config -> config.forcedTheme),
+            Codec.STRING.fieldOf("gamemode").forGetter(config -> config.gamemode)
     ).apply(instance, BuildBattleConfig::new));
 }

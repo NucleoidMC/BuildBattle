@@ -1,5 +1,6 @@
 {
   "type": "buildbattle:buildbattle",
+  "gamemode": "standard",
   "map": {
     "arena": "buildbattle:arena_medium",
     "lobby": "buildbattle:wait",

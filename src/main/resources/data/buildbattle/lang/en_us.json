@@ -1,5 +1,11 @@
 {
+  "gameType.buildbattle.buildbattle": "Build Battle",
   "game.buildbattle.buildbattle": "Build Battle",
+
+  "gameType.buildbattle.standard": "Build Battle",
+  "gameType.buildbattle.mini": "Build Battle: Mini",
+  "gameType.buildbattle.duo": "Build Battle: Duo",
+
   "text.buildbattle.theme": "Theme of this Build Battle is: %s",
   "text.buildbattle.build_time_ended": "Building time has ended!",
   "text.buildbattle.build_by": "Built by %s",
@@ -37,23 +43,31 @@
 
   "text.buildbattle.timer_bar.game_ended": "Game ended! %s won!",
 
+  "description.buildbattle.standard.1": "You have %s minutes to build",
+  "description.buildbattle.standard.2": "something related to given theme!",
+  "description.buildbattle.standard.3": "After time ends, you vote ",
+  "description.buildbattle.standard.4": "for other players buildings.",
+  "description.buildbattle.standard.5": "Best builder wins!",
+  "description.buildbattle.standard.6": "",
+  "description.buildbattle.standard.7": "",
+  "description.buildbattle.standard.8": "",
 
-  "text.buildbattle.about.standard.1": "You have %s minutes to build",
-  "text.buildbattle.about.standard.2": "something related to given theme!",
-  "text.buildbattle.about.standard.3": "After time ends, you vote ",
-  "text.buildbattle.about.standard.4": "for other players buildings.",
-  "text.buildbattle.about.standard.5": "Best builder wins!",
-  "text.buildbattle.about.standard.6": "",
-  "text.buildbattle.about.standard.7": "",
-  "text.buildbattle.about.standard.8": "",
+  "description.buildbattle.duo.1": "You have %s minutes to build",
+  "description.buildbattle.duo.2": "something related to given theme!",
+  "description.buildbattle.duo.3": "After time ends, you vote ",
+  "description.buildbattle.duo.4": "for other players buildings.",
+  "description.buildbattle.duo.5": "Best duo of builders wins!",
+  "description.buildbattle.duo.6": "",
+  "description.buildbattle.duo.7": "",
+  "description.buildbattle.duo.8": "",
 
-  "text.buildbattle.about.buildswap.1": "You have %s minutes to build",
-  "text.buildbattle.about.buildswap.2": "something related to given theme!",
-  "text.buildbattle.about.buildswap.3": "After this time ends, you will get",
-  "text.buildbattle.about.buildswap.4": "assigned to other player's build ",
-  "text.buildbattle.about.buildswap.5": "with a task of modifying it to",
-  "text.buildbattle.about.buildswap.6": "new selected theme (while keeping old one)",
-  "text.buildbattle.about.buildswap.7": "Best builders win!",
-  "text.buildbattle.about.buildswap.8": ""
+  "description.buildbattle.buildswap.1": "You have %s minutes to build",
+  "description.buildbattle.buildswap.2": "something related to given theme!",
+  "description.buildbattle.buildswap.3": "After this time ends, you will get",
+  "description.buildbattle.buildswap.4": "assigned to other player's build ",
+  "description.buildbattle.buildswap.5": "with a task of modifying it to",
+  "description.buildbattle.buildswap.6": "new selected theme (while keeping old one)",
+  "description.buildbattle.buildswap.7": "Best builders win!",
+  "description.buildbattle.buildswap.8": ""
 
 }

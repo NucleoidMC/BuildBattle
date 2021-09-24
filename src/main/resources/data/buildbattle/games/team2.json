@@ -1,6 +1,20 @@
 {
   "type": "buildbattle:buildbattle",
-  "name": "Build Battle (Teams)",
+  "gamemode": "duo",
+  "name": {
+    "translate": "gameType.buildbattle.duo"
+  },
+  "description": [
+    "<yellow><lang:'description.buildbattle.duo.1':'8'>",
+    "<yellow><lang:'description.buildbattle.duo.2'>",
+    "<yellow><lang:'description.buildbattle.duo.3'>",
+    "<yellow><lang:'description.buildbattle.duo.4'>",
+    "<yellow><lang:'description.buildbattle.duo.5'>"
+  ],
+  "icon": {
+    "id": "bricks",
+    "Count": 2
+  },
   "map": {
     "arena": "buildbattle:ompa",
     "lobby": "buildbattle:wait",

@@ -3,6 +3,7 @@ package eu.pb4.buildbattle;
 import eu.pb4.buildbattle.custom.BBItems;
 import eu.pb4.buildbattle.custom.FloorChangingEntity;
 import eu.pb4.buildbattle.themes.ThemesRegistry;
+import eu.pb4.polymer.entity.EntityHelper;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
@@ -41,6 +42,7 @@ public class BuildBattle implements ModInitializer {
         BBItems.register();
         Registry.register(Registry.ENTITY_TYPE, new Identifier(ID, "floor_changer"), FloorChangingEntity.TYPE);
         FabricDefaultAttributeRegistry.register(FloorChangingEntity.TYPE, FloorChangingEntity.createMobAttributes());
+        EntityHelper.registerVirtualEntityType(FloorChangingEntity.TYPE);
 
         ThemesRegistry.register();
     }

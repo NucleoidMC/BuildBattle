@@ -1,6 +1,17 @@
 {
   "type": "buildbattle:buildbattle",
-  "name": "Build Battle",
+  "gamemode": "standard",
+  "name": {
+    "translate": "gameType.buildbattle.standard"
+  },
+  "description": [
+    "<yellow><lang:'description.buildbattle.standard.1':'8'>",
+    "<yellow><lang:'description.buildbattle.standard.2'>",
+    "<yellow><lang:'description.buildbattle.standard.3'>",
+    "<yellow><lang:'description.buildbattle.standard.4'>",
+    "<yellow><lang:'description.buildbattle.standard.5'>"
+  ],
+  "icon": "bricks",
   "map": {
     "arena": "buildbattle:ompa",
     "lobby": "buildbattle:wait",

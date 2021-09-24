@@ -1,6 +1,7 @@
 package eu.pb4.buildbattle.game.stages;
 
 import eu.pb4.buildbattle.BuildBattle;
+import eu.pb4.buildbattle.custom.WrappedItem;
 import eu.pb4.buildbattle.game.TimerBar;
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import eu.pb4.buildbattle.game.PlayerData;
@@ -8,7 +9,7 @@ import eu.pb4.buildbattle.game.map.GameplayMap;
 import eu.pb4.buildbattle.custom.FloorChangingEntity;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import eu.pb4.buildbattle.other.FormattingUtil;
-import eu.pb4.buildbattle.other.GeneralUtils;
+import eu.pb4.buildbattle.other.BbUtils;
 import eu.pb4.buildbattle.other.ParticleOutlineRenderer;
 import eu.pb4.buildbattle.themes.Theme;
 import eu.pb4.buildbattle.themes.ThemeVotingManager;
@@ -16,7 +17,6 @@ import eu.pb4.buildbattle.themes.ThemesRegistry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.boss.BossBar;
@@ -148,13 +148,13 @@ public class BuildingStage {
     public static void open(GameSpace gameSpace, BuildBattleConfig config, Runnable runAfterTeleporting) {
         Set<PlayerRef> participants = gameSpace.getPlayers().stream().map(PlayerRef::of).collect(Collectors.toSet());
 
-        GameplayMap map = new GameplayMap(gameSpace.getServer(), config, (int) Math.ceil(((double) gameSpace.getPlayerCount()) / config.teamSize()));
+        GameplayMap map = new GameplayMap(gameSpace.getServer(), config, (int) Math.ceil(((double) gameSpace.getPlayers().size()) / config.teamSize()));
 
         RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
                 .setGenerator(map.asGenerator())
                 .setGameRule(GameRules.DO_WEATHER_CYCLE, false);
 
-        ServerWorld world = gameSpace.addWorld(worldConfig);
+        ServerWorld world = gameSpace.getWorlds().add(worldConfig);
 
         gameSpace.setActivity(game -> {
             GlobalWidgets widgets = GlobalWidgets.addTo(game);
@@ -209,7 +209,7 @@ public class BuildingStage {
     }
 
     private ActionResult onEntitySpawn(Entity entity) {
-        if (GeneralUtils.equalsOrInstance(entity, ItemEntity.class)) {
+        if (BbUtils.equalsOrInstance(entity, ItemEntity.class)) {
             return ActionResult.FAIL;
         }
         return ActionResult.PASS;
@@ -223,8 +223,8 @@ public class BuildingStage {
         if (packet instanceof CreativeInventoryActionC2SPacket packet1) {
             ItemStack stack = packet1.getItemStack();
             Identifier identifier = Registry.ITEM.getId(stack.getItem());
-            if (GeneralUtils.equalsOrInstance(stack.getItem(), Items.BARRIER, Items.LIGHT, Items.STRUCTURE_VOID, CommandBlockItem.class)
-                    || !GeneralUtils.equalsOrInstance(identifier.getNamespace(), "minecraft", BuildBattle.ID)) {
+            if (BbUtils.equalsOrInstance(stack.getItem(), Items.BARRIER, Items.LIGHT, Items.STRUCTURE_VOID, CommandBlockItem.class)
+                    || !BbUtils.equalsOrInstance(identifier.getNamespace(), "minecraft", BuildBattle.ID)) {
                 stack = ItemStack.EMPTY;
             } else if (stack.hasTag()) {
                 NbtCompound nbt = new NbtCompound();
@@ -241,7 +241,7 @@ public class BuildingStage {
                 stack.setTag(nbt);
             }
 
-            GeneralUtils.setCreativeStack(packet1, stack);
+            BbUtils.setCreativeStack(packet1, stack);
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(player.playerScreenHandler.syncId, 0, packet1.getSlot(), stack));
         }
 
@@ -270,7 +270,7 @@ public class BuildingStage {
     private TypedActionResult<ItemStack> onItemUse(ServerPlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
         Item item = stack.getItem();
-        if (GeneralUtils.equalsOrInstance(item, Items.CHORUS_FRUIT, Items.ENDER_PEARL, Items.ENDER_EYE)) {
+        if (BbUtils.equalsOrInstance(item, Items.CHORUS_FRUIT, Items.ENDER_PEARL, Items.ENDER_EYE)) {
             return TypedActionResult.fail(stack);
         }
 
@@ -285,7 +285,7 @@ public class BuildingStage {
         }
 
         ItemStack stack = player.getStackInHand(hand);
-        if (GeneralUtils.equalsOrInstance(stack.getItem(), Items.ARMOR_STAND, EntityBucketItem.class, SpawnEggItem.class, BoatItem.class)) {
+        if (BbUtils.equalsOrInstance(stack.getItem(), Items.ARMOR_STAND, EntityBucketItem.class, SpawnEggItem.class, BoatItem.class)) {
             return ActionResult.FAIL;
         }
 
@@ -368,6 +368,7 @@ public class BuildingStage {
     private void spawnParticipant(ServerPlayerEntity player) {
         player.getInventory().clear();
         player.changeGameMode(GameMode.CREATIVE);
+        //player.getInventory().offerOrDrop(WrappedItem.createWrapped("test"));
         this.participants.get(PlayerRef.of(player)).arena.teleportPlayer(player, this.world);
     }
 
@@ -427,6 +428,14 @@ public class BuildingStage {
                             PlayerData data = this.participants.get(PlayerRef.of(player));
                             if (data != null) {
                                 ParticleOutlineRenderer.render(player, data.arena.buildingArea.min(), data.arena.buildingArea.max().add(1, 1, 1), effect);
+                            }
+                        }
+
+                        ParticleEffect effect2 = new DustParticleEffect(new Vec3f(0f, 1f, 0f), 2.0F);
+                        for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+                            PlayerData data = this.participants.get(PlayerRef.of(player));
+                            if (data != null) {
+                                ParticleOutlineRenderer.render(player, data.arena.bounds.min(), data.arena.bounds.max().add(1, 1, 1), effect2);
                             }
                         }
                     }

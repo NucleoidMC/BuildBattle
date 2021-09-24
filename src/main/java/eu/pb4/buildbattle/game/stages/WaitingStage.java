@@ -35,7 +35,7 @@ public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfi
         return context.openWithWorld(worldConfig, (game, world) -> {
             WaitingStage waiting = new WaitingStage(game.getGameSpace(), waitingMap, config, world);
 
-            GameWaitingLobby.applyTo(game, config.playerConfig());
+            GameWaitingLobby.addTo(game, config.playerConfig());
 
             game.listen(GameActivityEvents.REQUEST_START, waiting::requestStart);
             game.listen(GamePlayerEvents.ADD, waiting::addPlayer);
@@ -48,7 +48,7 @@ public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfi
     }
 
     private GameResult requestStart() {
-        BuildingStage.open(this.gameSpace, this.config, () -> gameSpace.removeWorld(this.world));
+        BuildingStage.open(this.gameSpace, this.config, () -> gameSpace.getWorlds().remove(this.world));
         return GameResult.ok();
     }
 
