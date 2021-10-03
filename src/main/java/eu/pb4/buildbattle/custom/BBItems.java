@@ -36,10 +36,10 @@ public class BBItems {
 
         Registry.register(Registry.ITEM, id("wrapped_item"), WRAPPED);
 
-        registerWrappedItem("tiny_potato", new GuiElementBuilder(Items.PLAYER_HEAD)
+        /*registerWrappedItem("tiny_potato", new GuiElementBuilder(Items.PLAYER_HEAD)
                 .setName(BbUtils.getText("item", "tiny_potato"))
                 .setSkullOwner("ewogICJ0aW1lc3RhbXAiIDogMTYwNjIyODAxMzY0NCwKICAicHJvZmlsZUlkIiA6ICJiMGQ0YjI4YmMxZDc0ODg5YWYwZTg2NjFjZWU5NmFhYiIsCiAgInByb2ZpbGVOYW1lIiA6ICJNaW5lU2tpbl9vcmciLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTczNTE0YTIzMjQ1ZjE1ZGJhZDVmYjRlNjIyMTYzMDIwODY0Y2NlNGMxNWQ1NmRlM2FkYjkwZmE1YTcxMzdmZCIKICAgIH0KICB9Cn0=", null, null)
-                .asStack());
+                .asStack());*/
     }
 
 

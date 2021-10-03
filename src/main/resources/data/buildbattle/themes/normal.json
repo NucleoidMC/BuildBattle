@@ -1,10 +1,7 @@
 {
   "themeName": "Standard themes",
   "themes": [
-    "Road",
-    "City",
-    "Fruits",
-    "Mining",
+    "Mine",
     "Snow",
     "House",
     "Castle",
@@ -12,7 +9,6 @@
     "Desert",
     "Sweets",
     "Temple",
-    "Minecraft",
     "Village",
     "The End",
     "Nether",
@@ -24,7 +20,22 @@
     "Windmill",
     "Island",
     "Beach",
-    "Mine",
-    "Mini-game"
+    "Tiny Potato",
+    "Magic",
+    "Television",
+    "Undead",
+    "Flying",
+    "Games",
+    "Farm",
+    "Shop",
+    "Marketplace",
+    "Camping",
+    "Retro",
+    "Cinema",
+    "Park",
+    "Festival",
+    "Machinery",
+    "Alien Artefact",
+    "Invasion"
   ]
 }
