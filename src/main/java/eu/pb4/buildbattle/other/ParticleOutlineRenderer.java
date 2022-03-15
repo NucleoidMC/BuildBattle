@@ -38,7 +38,7 @@ public class ParticleOutlineRenderer {
     }
 
     private static void spawnParticleIfVisible(ServerPlayerEntity player, ParticleEffect effect, double x, double y, double z) {
-        ServerWorld world = player.getServerWorld();
+        ServerWorld world = player.getWorld();
 
         Vec3d delta = player.getPos().subtract(x, y, z);
         double length2 = delta.lengthSquared();

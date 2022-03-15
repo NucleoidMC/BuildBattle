@@ -17,7 +17,7 @@ import net.minecraft.entity.boss.BossBar;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
-import net.minecraft.item.FireworkItem;
+import net.minecraft.item.FireworkRocketItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket;
@@ -271,7 +271,7 @@ public class VotingStage {
 
                 if (time % 20 == 0) {
                     for (PlayerData playerData : this.votedArea.players) {
-                        ItemStack itemStack = ItemStackBuilder.firework(DyeColor.values()[(int) (Math.random() * DyeColor.values().length - 1)].getFireworkColor(), 1, FireworkItem.Type.LARGE_BALL).build();
+                        ItemStack itemStack = ItemStackBuilder.firework(DyeColor.values()[(int) (Math.random() * DyeColor.values().length - 1)].getFireworkColor(), 1, FireworkRocketItem.Type.LARGE_BALL).build();
                         ServerPlayerEntity player = playerData.playerRef.getEntity(world);
                         if (player != null) {
                             FireworkRocketEntity entity = new FireworkRocketEntity(world, player.getX(), player.getY() + 2, player.getZ(), itemStack);

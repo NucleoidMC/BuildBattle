@@ -3,13 +3,9 @@ package eu.pb4.buildbattle;
 import eu.pb4.buildbattle.custom.BBItems;
 import eu.pb4.buildbattle.custom.FloorChangingEntity;
 import eu.pb4.buildbattle.themes.ThemesRegistry;
-import eu.pb4.polymer.entity.EntityHelper;
+import eu.pb4.polymer.api.entity.PolymerEntityUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
@@ -42,7 +38,7 @@ public class BuildBattle implements ModInitializer {
         BBItems.register();
         Registry.register(Registry.ENTITY_TYPE, new Identifier(ID, "floor_changer"), FloorChangingEntity.TYPE);
         FabricDefaultAttributeRegistry.register(FloorChangingEntity.TYPE, FloorChangingEntity.createMobAttributes());
-        EntityHelper.registerVirtualEntityType(FloorChangingEntity.TYPE);
+        PolymerEntityUtils.registerType(FloorChangingEntity.TYPE);
 
         ThemesRegistry.register();
     }

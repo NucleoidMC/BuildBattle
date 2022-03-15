@@ -226,9 +226,9 @@ public class BuildingStage {
             if (BbUtils.equalsOrInstance(stack.getItem(), Items.BARRIER, Items.LIGHT, Items.STRUCTURE_VOID, CommandBlockItem.class)
                     || !BbUtils.equalsOrInstance(identifier.getNamespace(), "minecraft", BuildBattle.ID)) {
                 stack = ItemStack.EMPTY;
-            } else if (stack.hasTag()) {
+            } else if (stack.hasNbt()) {
                 NbtCompound nbt = new NbtCompound();
-                NbtCompound og = stack.getTag();
+                NbtCompound og = stack.getNbt();
 
                 assert og != null;
                 if (og.contains("Patterns", NbtElement.LIST_TYPE)) {
@@ -238,7 +238,7 @@ public class BuildingStage {
                     }
                 }
 
-                stack.setTag(nbt);
+                stack.setNbt(nbt);
             }
 
             BbUtils.setCreativeStack(packet1, stack);

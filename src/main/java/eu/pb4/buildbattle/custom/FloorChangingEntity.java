@@ -4,7 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import eu.pb4.buildbattle.mixin.VillagerEntityAccessor;
 import eu.pb4.buildbattle.other.BbUtils;
-import eu.pb4.polymer.entity.VirtualEntity;
+import eu.pb4.polymer.api.entity.PolymerEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.block.*;
 import net.minecraft.entity.*;
@@ -27,7 +27,7 @@ import net.minecraft.world.World;
 import java.util.List;
 import java.util.Map;
 
-public class FloorChangingEntity extends MobEntity implements VirtualEntity {
+public class FloorChangingEntity extends MobEntity implements PolymerEntity {
     public static EntityType<FloorChangingEntity> TYPE = FabricEntityTypeBuilder.<FloorChangingEntity>create(SpawnGroup.MISC, FloorChangingEntity::new).dimensions(EntityDimensions.fixed(0.75f, 2f)).build();
     private BuildArena buildArena;
     private final VillagerData villagerData;
@@ -41,7 +41,7 @@ public class FloorChangingEntity extends MobEntity implements VirtualEntity {
         this.setSilent(true);
         this.setNoGravity(true);
         this.setCustomName(new TranslatableText("text.buildbattle.floor_change").formatted(Formatting.GOLD));
-        this.villagerData = new VillagerData(Registry.VILLAGER_TYPE.getRandom(this.getRandom()), Registry.VILLAGER_PROFESSION.getRandom(this.getRandom()), 3);
+        this.villagerData = new VillagerData(Registry.VILLAGER_TYPE.getRandom(this.getRandom()).get().value(), Registry.VILLAGER_PROFESSION.getRandom(this.getRandom()).get().value(), 3);
     }
 
     public FloorChangingEntity(World world) {
@@ -77,12 +77,12 @@ public class FloorChangingEntity extends MobEntity implements VirtualEntity {
     public void attachLeash(Entity entity, boolean sendPacket) { }
 
     @Override
-    public EntityType<?> getVirtualEntityType() {
+    public EntityType<?> getPolymerEntityType() {
         return EntityType.VILLAGER;
     }
 
     @Override
-    public List<Pair<EquipmentSlot, ItemStack>> getVirtualEntityEquipment(Map<EquipmentSlot, ItemStack> map) {
+    public List<Pair<EquipmentSlot, ItemStack>> getPolymerVisibleEquipment(Map<EquipmentSlot, ItemStack> map) {
         return List.of(Pair.of(EquipmentSlot.MAINHAND, this.lastUsedFloor));
     }
 
