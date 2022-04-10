@@ -1,4 +1,4 @@
-package eu.pb4.buildbattle.custom;
+package eu.pb4.buildbattle.custom.items;
 
 import eu.pb4.polymer.api.item.PolymerItem;
 import net.minecraft.item.Item;

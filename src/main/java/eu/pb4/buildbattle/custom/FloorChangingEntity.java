@@ -2,6 +2,7 @@ package eu.pb4.buildbattle.custom;
 
 import com.mojang.datafixers.util.Pair;
 import eu.pb4.buildbattle.game.map.BuildArena;
+import eu.pb4.buildbattle.mixin.BucketItemAccessor;
 import eu.pb4.buildbattle.mixin.VillagerEntityAccessor;
 import eu.pb4.buildbattle.other.BbUtils;
 import eu.pb4.polymer.api.entity.PolymerEntity;
@@ -11,14 +12,13 @@ import net.minecraft.entity.*;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.*;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.village.VillagerData;
@@ -93,38 +93,14 @@ public class FloorChangingEntity extends MobEntity implements PolymerEntity {
 
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        Item item = player.getStackInHand(hand).getItem();
-
         if (this.buildArena != null) {
             if (this.buildArena.isBuilder(player)) {
-                BlockState blockState = null;
-
-                if (item instanceof BlockItem) {
-                    Block block = ((BlockItem) item).getBlock();
-
-                    if (block instanceof LeavesBlock) {
-                        blockState = block.getDefaultState().with(LeavesBlock.PERSISTENT, true);
-                    } else if (!(BbUtils.equalsOrInstance(block, ChorusPlantBlock.class, AbstractButtonBlock.class, LeverBlock.class, BlockEntityProvider.class,
-                            DoorBlock.class, CactusBlock.class, SugarCaneBlock.class, VineBlock.class, PlantBlock.class, SmallDripleafBlock.class, RootsBlock.class,
-                            HangingRootsBlock.class, AbstractLichenBlock.class, BambooSaplingBlock.class, BambooBlock.class))
-                    ) {
-                        blockState = block.getDefaultState();
-
-
-                    }
-                } else if (item == Items.BUCKET) {
-                    blockState = Blocks.AIR.getDefaultState();
-                } else if (item == Items.WATER_BUCKET) {
-                    blockState = Blocks.WATER.getDefaultState();
-                } else if (item == Items.LAVA_BUCKET) {
-                    blockState = Blocks.LAVA.getDefaultState();
-                }
-
-                if (blockState != null) {
-                    this.lastUsedFloor = item.getDefaultStack();
+                BlockState state = BbUtils.getStateFrom((ServerPlayerEntity) player, player.getStackInHand(hand));
+                if (state != null) {
+                    this.lastUsedFloor = player.getStackInHand(hand);
                     this.equipStack(EquipmentSlot.MAINHAND, this.lastUsedFloor);
                     for (BlockPos blockPos : this.buildArena.ground) {
-                        this.world.setBlockState(blockPos, blockState);
+                        this.world.setBlockState(blockPos, state);
                     }
 
                     return ActionResult.SUCCESS;

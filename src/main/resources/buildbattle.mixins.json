@@ -4,6 +4,7 @@
   "package": "eu.pb4.buildbattle.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "BucketItemAccessor",
     "BucketItemMixin",
     "CreativeActionPacketAccessor",
     "DispenserBlockMixin",

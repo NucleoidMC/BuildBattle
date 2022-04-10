@@ -1,5 +1,6 @@
 package eu.pb4.buildbattle;
 
+import com.mojang.logging.LogUtils;
 import eu.pb4.buildbattle.custom.BBItems;
 import eu.pb4.buildbattle.custom.FloorChangingEntity;
 import eu.pb4.buildbattle.themes.ThemesRegistry;
@@ -7,13 +8,13 @@ import eu.pb4.polymer.api.entity.PolymerEntityUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.tag.TagKey;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
+import org.slf4j.Logger;
 import xyz.nucleoid.plasmid.game.GameType;
 import net.minecraft.util.Identifier;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import eu.pb4.buildbattle.game.stages.WaitingStage;
 import xyz.nucleoid.plasmid.game.rule.GameRuleType;
@@ -22,7 +23,7 @@ import xyz.nucleoid.stimuli.event.StimulusEvent;
 public class BuildBattle implements ModInitializer {
 
     public static final String ID = "buildbattle";
-    public static final Logger LOGGER = LogManager.getLogger(ID);
+    public static final Logger LOGGER = LogUtils.getLogger();
 
     public static final GameType<BuildBattleConfig> TYPE = GameType.register(
             new Identifier(ID, "buildbattle"),
@@ -32,6 +33,8 @@ public class BuildBattle implements ModInitializer {
 
 
     public static final GameRuleType CREATIVE_LIMIT = GameRuleType.create();
+
+    public static final TagKey BANNED_ITEMS = TagKey.of(Registry.ITEM_KEY, new Identifier(ID, "banned"));
 
     @Override
     public void onInitialize() {

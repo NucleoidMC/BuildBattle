@@ -2,7 +2,7 @@ package eu.pb4.buildbattle.game.stages;
 
 import com.mojang.datafixers.util.Pair;
 import eu.pb4.buildbattle.custom.BBItems;
-import eu.pb4.buildbattle.custom.VotingItem;
+import eu.pb4.buildbattle.custom.items.VotingItem;
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import eu.pb4.buildbattle.game.PlayerData;
 import eu.pb4.buildbattle.game.TimerBar;
@@ -22,6 +22,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerAbilitiesS2CPacket;
+import net.minecraft.network.packet.s2c.play.UpdateSelectedSlotS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -180,13 +181,17 @@ public class VotingStage {
         player.getInventory().clear();
         player.changeGameMode(GameMode.ADVENTURE);
 
-        player.getInventory().insertStack(BBItems.WT.getDefaultStack());
-        player.getInventory().insertStack(BBItems.BAD.getDefaultStack());
-        player.getInventory().insertStack(BBItems.NB.getDefaultStack());
-        player.getInventory().insertStack(BBItems.OKAY.getDefaultStack());
-        player.getInventory().insertStack(BBItems.GOOD.getDefaultStack());
-        player.getInventory().insertStack(BBItems.GREAT.getDefaultStack());
-        player.getInventory().insertStack(BBItems.WOW.getDefaultStack());
+        var inv = player.getInventory();
+
+        inv.setStack(1, BBItems.VOTE_TERRIBLE.getDefaultStack());
+        inv.setStack(2, BBItems.VOTE_BAD.getDefaultStack());
+        inv.setStack(3, BBItems.VOTE_NOT_BAD.getDefaultStack());
+        inv.setStack(4, BBItems.VOTE_OKAY.getDefaultStack());
+        inv.setStack(5, BBItems.VOTE_GOOD.getDefaultStack());
+        inv.setStack(6, BBItems.VOTE_GREAT.getDefaultStack());
+        inv.setStack(7, BBItems.VOTE_WOW.getDefaultStack());
+        inv.selectedSlot = 4;
+        player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(inv.selectedSlot));
 
         player.getAbilities().allowFlying = true;
         player.networkHandler.sendPacket(new PlayerAbilitiesS2CPacket(player.getAbilities()));
@@ -287,15 +292,17 @@ public class VotingStage {
 
     private void countScore() {
         if (this.votedArea != null) {
-            for (PlayerData playerData : this.participants.values()) {
-                this.votedArea.score += playerData.getAndClearCurrentVote();
+            for (var playerData : this.participants.values()) {
+                if (this.votedArea != playerData.arena) {
+                    this.votedArea.score += playerData.getAndClearCurrentVote();
+                }
             }
         }
     }
 
     private boolean nextArena() {
         while (this.votingArenaIterator.hasNext()) {
-            BuildArena arena = this.votingArenaIterator.next();
+            var arena = this.votingArenaIterator.next();
             if (arena.getPlayerCount() > 0) {
                 this.votedArea = arena;
                 this.allowVoting = true;
@@ -316,13 +323,13 @@ public class VotingStage {
     }
 
     private void finishGame() {
-        List<BuildArena> buildArenaList = this.gameMap.buildArena.stream()
+        var buildArenaList = this.gameMap.buildArena.stream()
                 .sorted(Comparator.comparingDouble(p -> -p.score))
                 .filter(arena -> arena.getPlayerCount() != 0)
                 .collect(Collectors.toList());
 
-        Text message = FormattingUtil.format(FormattingUtil.FLAG_PREFIX, new TranslatableText("text.buildbattle.game_ended").formatted(Formatting.GOLD));
-        PlayerSet players = this.gameSpace.getPlayers();
+        var message = FormattingUtil.format(FormattingUtil.FLAG_PREFIX, new TranslatableText("text.buildbattle.game_ended").formatted(Formatting.GOLD));
+        var players = this.gameSpace.getPlayers();
         players.sendMessage(message);
 
         for (int x = 0; x < 5; x++) {
