@@ -40,8 +40,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.*;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -131,7 +130,7 @@ public class BuildingStage {
             this.themeVotingManager = new ThemeVotingManager(theme);
             this.themeVotingTime = 200;
             this.timerBar.setColor(BossBar.Color.BLUE);
-            this.timerBar.update(new TranslatableText("text.buildbattle.timer_bar.voting_theme"), 1);
+            this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.voting_theme"), 1);
         } else {
             assert theme != null;
             this.theme = theme.getRandom();
@@ -177,7 +176,7 @@ public class BuildingStage {
 
             game.listen(GameActivityEvents.ENABLE, () -> {
                 active.onOpen();
-                runAfterTeleporting.run();
+                gameSpace.getServer().execute(runAfterTeleporting);
             });
 
             game.listen(GamePlayerEvents.OFFER, offer -> offer.accept(world, Vec3d.ZERO));
@@ -486,14 +485,14 @@ public class BuildingStage {
                     this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.5f);
                 }
 
-                this.timerBar.update(new TranslatableText("text.buildbattle.timer_bar.voting_theme"), ((float) (this.themeVotingTime - time)) / this.themeVotingTime);
+                this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.voting_theme"), ((float) (this.themeVotingTime - time)) / this.themeVotingTime);
             }
             case BUILDING -> {
                 if (time >= this.buildingTimeDuration) {
-                    this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.HOURGLASS_PREFIX, new TranslatableText("text.buildbattle.build_time_ended").formatted(Formatting.GREEN)));
+                    this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.HOURGLASS_PREFIX, Text.translatable("text.buildbattle.build_time_ended").formatted(Formatting.GREEN)));
                     this.lockBuilding = true;
                     this.timerBar.setColor(BossBar.Color.RED);
-                    this.timerBar.update(new TranslatableText("text.buildbattle.timer_bar.times_up"), 0);
+                    this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.times_up"), 0);
                     for (BuildArena buildArena : this.gameMap.buildArena) {
                         buildArena.removeEntity();
                     }
@@ -512,10 +511,10 @@ public class BuildingStage {
                     }
 
                     this.timerBar.setColor(BossBar.Color.GREEN);
-                    this.timerBar.update(new TranslatableText("text.buildbattle.timer_bar.time_left", String.format("%02d:%02d", minutes, seconds))
-                            .append(new LiteralText(" - ").formatted(Formatting.GRAY))
-                            .append(new TranslatableText("text.buildbattle.timer_bar.theme").formatted(Formatting.YELLOW))
-                            .append(new LiteralText(theme)), ((float) ticksLeft) / (this.buildingTimeDuration - this.themeVotingTime));
+                    this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.time_left", String.format("%02d:%02d", minutes, seconds))
+                            .append(Text.literal(" - ").formatted(Formatting.GRAY))
+                            .append(Text.translatable("text.buildbattle.timer_bar.theme").formatted(Formatting.YELLOW))
+                            .append(Text.literal(theme)), ((float) ticksLeft) / (this.buildingTimeDuration - this.themeVotingTime));
 
                     if (time % 10 == 0) {
                         var borderEffect = new DustParticleEffect(new Vec3f(0.8f, 0.8f, 0.8f), 2.0F);
@@ -551,8 +550,8 @@ public class BuildingStage {
 
 
     private void switchToBuilding() {
-        gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, new TranslatableText("text.buildbattle.theme",
-                new LiteralText(this.theme).formatted(Formatting.GOLD)
+        gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Text.translatable("text.buildbattle.theme",
+                Text.literal(this.theme).formatted(Formatting.GOLD)
         ).formatted(Formatting.WHITE)));
 
         this.phase = Phase.BUILDING;

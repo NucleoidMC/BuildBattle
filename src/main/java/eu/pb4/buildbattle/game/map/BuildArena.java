@@ -6,10 +6,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -44,17 +42,17 @@ public class BuildArena {
 
     public Text getBuildersText(GameSpace gameSpace) {
         if (this.players.isEmpty()) {
-            return new TranslatableText("text.buildbattle.nobody").formatted(Formatting.GRAY).formatted(Formatting.ITALIC);
+            return Text.translatable("text.buildbattle.nobody").formatted(Formatting.GRAY).formatted(Formatting.ITALIC);
         } else {
-            MutableText text = new LiteralText("").formatted(Formatting.WHITE);
+            MutableText text = Text.empty().formatted(Formatting.WHITE);
 
             for (PlayerData playerData : this.players) {
                 int index = this.players.indexOf(playerData);
                 if (index != 0) {
                     if (this.players.size() - index == 1) {
-                        text.append(new TranslatableText("text.buildbattle.and").formatted(Formatting.GOLD));
+                        text.append(Text.translatable("text.buildbattle.and").formatted(Formatting.GOLD));
                     } else {
-                        text.append(new LiteralText(", ").formatted(Formatting.GOLD));
+                        text.append(Text.literal(", ").formatted(Formatting.GOLD));
                     }
                 }
 
@@ -63,7 +61,7 @@ public class BuildArena {
                 if (player != null) {
                     text.append(player.getDisplayName());
                 } else {
-                    text.append(new TranslatableText("text.buildbattle.disconnected").formatted(Formatting.GRAY).formatted(Formatting.ITALIC));
+                    text.append(Text.translatable("text.buildbattle.disconnected").formatted(Formatting.GRAY).formatted(Formatting.ITALIC));
                 }
             }
             return text;

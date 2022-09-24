@@ -48,7 +48,9 @@ public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfi
     }
 
     private GameResult requestStart() {
-        BuildingStage.open(this.gameSpace, this.config, () -> gameSpace.getWorlds().remove(this.world));
+        this.gameSpace.getServer().execute(() -> {
+            BuildingStage.open(this.gameSpace, this.config, () -> gameSpace.getWorlds().remove(this.world));
+        });
         return GameResult.ok();
     }
 

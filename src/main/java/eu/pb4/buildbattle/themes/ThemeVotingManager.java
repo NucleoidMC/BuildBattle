@@ -13,8 +13,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 
@@ -79,7 +78,7 @@ public class ThemeVotingManager {
             for (String theme : ThemeVotingManager.this.possible) {
                 this.updateThemePercentage(theme, 0, 1);
             }
-            this.setTitle(new TranslatableText("text.buildbattle.timer_bar.voting_theme"));
+            this.setTitle(Text.translatable("text.buildbattle.timer_bar.voting_theme"));
         }
 
         @Override
@@ -93,7 +92,7 @@ public class ThemeVotingManager {
             int percent = Math.round(((float) votes / allVotes) * 100);
 
             GuiElementBuilder icon = new GuiElementBuilder(Items.BRICKS, Math.max(votes, 1))
-                    .setName(new LiteralText(theme).formatted(Formatting.YELLOW).append(new LiteralText(" - " + percent + "%"))).hideFlags();
+                    .setName(Text.literal(theme).formatted(Formatting.YELLOW).append(Text.literal(" - " + percent + "%"))).hideFlags();
 
             icon.setCallback((x, y, z) -> {
                 this.player.playSound(SoundEvents.UI_BUTTON_CLICK, SoundCategory.MASTER, 0.5f, 1);
@@ -120,10 +119,10 @@ public class ThemeVotingManager {
             int slots = Math.round(percentFloat * 8);
 
             GuiElementBuilder filled = new GuiElementBuilder(filledItem)
-                    .setName(LiteralText.EMPTY.copy()).hideFlags();
+                    .setName(Text.empty()).hideFlags();
 
             GuiElementBuilder empty = new GuiElementBuilder(Items.GRAY_STAINED_GLASS_PANE)
-                    .setName(LiteralText.EMPTY.copy()).hideFlags();
+                    .setName(Text.empty()).hideFlags();
 
             for (int x = 1; x <= slots; x++) {
                 this.setSlot(relativePos + x, filled);

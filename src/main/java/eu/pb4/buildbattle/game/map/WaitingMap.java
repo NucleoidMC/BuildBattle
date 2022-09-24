@@ -2,7 +2,7 @@ package eu.pb4.buildbattle.game.map;
 
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.biome.BiomeKeys;
@@ -29,7 +29,7 @@ public class WaitingMap {
             this.template = MapTemplateSerializer.loadFromResource(server, this.config.mapConfig().lobby());
             this.template.setBiome(BiomeKeys.FOREST);
         } catch (IOException e) {
-            throw new GameOpenException(new LiteralText("Failed to load template"), e);
+            throw new GameOpenException(Text.literal("Failed to load template"), e);
         }
 
         this.spawnArea = Objects.requireNonNull(this.template.getMetadata().getFirstRegionBounds("wait_spawn")).asBox();

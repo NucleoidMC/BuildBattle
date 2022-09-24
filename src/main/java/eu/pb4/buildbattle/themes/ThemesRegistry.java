@@ -42,24 +42,24 @@ public class ThemesRegistry {
             public void reload(ResourceManager manager) {
                 THEMES.clear();
 
-                Collection<Identifier> resources = manager.findResources("themes", path -> path.endsWith(".json"));
+                var resources = manager.findResources("themes", path -> path.getPath().endsWith(".json"));
 
-                for (Identifier path : resources) {
+                for (var pair : resources.entrySet()) {
                     try {
-                        Resource resource = manager.getResource(path);
+                        Resource resource = pair.getValue();
                         try (Reader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
-                            JsonElement json = new JsonParser().parse(reader);
+                            JsonElement json = JsonParser.parseReader(reader);
 
-                            Identifier identifier = identifierFromPath(path);
+                            Identifier identifier = identifierFromPath(pair.getKey());
 
                             DataResult<Theme> result = Theme.CODEC.decode(JsonOps.INSTANCE, json).map(Pair::getFirst);
 
                             result.result().ifPresent(game -> THEMES.register(identifier, game));
 
-                            result.error().ifPresent(error -> BuildBattle.LOGGER.error("Failed to decode game at {}: {}", path, error.toString()));
+                            result.error().ifPresent(error -> BuildBattle.LOGGER.error("Failed to decode game at {}: {}", pair.getKey(), error.toString()));
                         }
                     } catch (IOException e) {
-                        BuildBattle.LOGGER.error("Failed to read configured game at {}", path, e);
+                        BuildBattle.LOGGER.error("Failed to read configured game at {}", pair.getKey(), e);
                     }
                 }
             }

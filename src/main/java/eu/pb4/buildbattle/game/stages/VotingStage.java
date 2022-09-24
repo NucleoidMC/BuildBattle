@@ -27,9 +27,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.*;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
@@ -139,7 +137,7 @@ public class VotingStage {
         PlayerData playerData = this.participants.get(PlayerRef.of(player));
         if (playerData != null && this.allowVoting) {
             if (this.votedArea.players.contains(playerData)) {
-                player.sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, new TranslatableText("text.buildbattle.vote_own").formatted(Formatting.RED)), false);
+                player.sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Text.translatable("text.buildbattle.vote_own").formatted(Formatting.RED)), false);
 
                 return TypedActionResult.fail(player.getStackInHand(hand));
             }
@@ -147,7 +145,7 @@ public class VotingStage {
             ItemStack itemStack = player.getStackInHand(hand);
             if (itemStack.getItem() instanceof VotingItem) {
                 playerData.currentVote = ((VotingItem) itemStack.getItem()).score;
-                player.sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, new TranslatableText("text.buildbattle.vote", itemStack.getName()).formatted(Formatting.WHITE)), false);
+                player.sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Text.translatable("text.buildbattle.vote", itemStack.getName()).formatted(Formatting.WHITE)), false);
             }
             return TypedActionResult.success(player.getStackInHand(hand), true);
         }
@@ -219,15 +217,15 @@ public class VotingStage {
                     this.allowVoting = false;
                     this.countScore();
                     this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.PICKAXE_PREFIX,
-                            new TranslatableText("text.buildbattle.build_by",
+                            Text.translatable("text.buildbattle.build_by",
                                     this.votedArea.getBuildersText(this.gameSpace)
                             ).formatted(Formatting.AQUA)));
                     this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.STAR_PREFIX,
-                            new TranslatableText("text.buildbattle.build_score",
-                                    new LiteralText("" + this.votedArea.score).formatted(Formatting.GOLD)
+                            Text.translatable("text.buildbattle.build_score",
+                                    Text.literal("" + this.votedArea.score).formatted(Formatting.GOLD)
                             ).formatted(Formatting.LIGHT_PURPLE)));
 
-                    this.timerBar.update(new TranslatableText(this.votingArenaIterator.hasNext() ? "text.buildbattle.timer_bar.next_arena" : "text.buildbattle.timer_bar.finishing_game"), 0);
+                    this.timerBar.update(Text.translatable(this.votingArenaIterator.hasNext() ? "text.buildbattle.timer_bar.next_arena" : "text.buildbattle.timer_bar.finishing_game"), 0);
 
                     for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
                         player.getInventory().clear();
@@ -242,10 +240,10 @@ public class VotingStage {
                 int minutes = secondsUntilEnd / 60;
                 int seconds = secondsUntilEnd % 60;
 
-                this.timerBar.update(new TranslatableText("text.buildbattle.timer_bar.time_left", String.format("%02d:%02d", minutes, seconds))
-                                .append(new LiteralText(" - ").formatted(Formatting.GRAY))
-                                .append(new TranslatableText("text.buildbattle.timer_bar.theme").formatted(Formatting.YELLOW))
-                                .append(new LiteralText(theme)),
+                this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.time_left", String.format("%02d:%02d", minutes, seconds))
+                                .append(Text.literal(" - ").formatted(Formatting.GRAY))
+                                .append(Text.translatable("text.buildbattle.timer_bar.theme").formatted(Formatting.YELLOW))
+                                .append(Text.literal(theme)),
 
                         ((float) ticksLeft) / (this.config.votingTimeSecs() * 20));
             }
@@ -253,7 +251,7 @@ public class VotingStage {
                 if (time >= this.switchToNextArenaTime) {
                     if (this.nextArena()) {
                         this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX,
-                                new TranslatableText("text.buildbattle.next_arena").formatted(Formatting.BLUE)));
+                                Text.translatable("text.buildbattle.next_arena").formatted(Formatting.BLUE)));
 
                         this.gameSpace.getPlayers().playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, SoundCategory.MASTER, 10f, 1);
                         this.allowVoting = true;
@@ -263,7 +261,7 @@ public class VotingStage {
                         this.gameEndTime = this.currentTick + 200;
                         this.finishGame();
 
-                        this.timerBar.update(new TranslatableText("text.buildbattle.timer_bar.game_ended", this.votedArea.getBuildersText(this.gameSpace)), 1);
+                        this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.game_ended", this.votedArea.getBuildersText(this.gameSpace)), 1);
                         this.timerBar.setColor(BossBar.Color.YELLOW);
                     }
                 }
@@ -328,7 +326,7 @@ public class VotingStage {
                 .filter(arena -> arena.getPlayerCount() != 0)
                 .collect(Collectors.toList());
 
-        var message = FormattingUtil.format(FormattingUtil.FLAG_PREFIX, new TranslatableText("text.buildbattle.game_ended").formatted(Formatting.GOLD));
+        var message = FormattingUtil.format(FormattingUtil.FLAG_PREFIX, Text.translatable("text.buildbattle.game_ended").formatted(Formatting.GOLD));
         var players = this.gameSpace.getPlayers();
         players.sendMessage(message);
 
@@ -339,18 +337,18 @@ public class VotingStage {
 
             BuildArena arena = buildArenaList.get(x);
 
-            players.sendMessage(new TranslatableText("text.buildbattle.win_place",
+            players.sendMessage(Text.translatable("text.buildbattle.win_place",
                     x + 1,
                     arena.getBuildersText(this.gameSpace),
-                    new LiteralText("" + arena.score).formatted(Formatting.WHITE)
+                    Text.literal("" + arena.score).formatted(Formatting.WHITE)
             ).formatted(Formatting.YELLOW));
         }
 
         for (BuildArena arena : buildArenaList) {
             int arenaPlace = buildArenaList.indexOf(arena) + 1;
-            Text yourScore = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WIN_STYLE, new TranslatableText("text.buildbattle.your_score",
-                    new LiteralText("" + (arenaPlace)).append(TextHelper.getOrdinal(arenaPlace)).formatted(Formatting.WHITE),
-                    new LiteralText("" + arena.score).formatted(Formatting.WHITE)));
+            Text yourScore = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WIN_STYLE, Text.translatable("text.buildbattle.your_score",
+                    Text.literal("" + (arenaPlace)).append(TextHelper.getOrdinal(arenaPlace)).formatted(Formatting.WHITE),
+                    Text.literal("" + arena.score).formatted(Formatting.WHITE)));
 
             for (UUID uuid : arena.playersUuid) {
                 ServerPlayerEntity player = this.gameSpace.getPlayers().getEntity(uuid);

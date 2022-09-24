@@ -14,11 +14,10 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.village.VillagerData;
@@ -40,7 +39,7 @@ public class FloorChangingEntity extends MobEntity implements PolymerEntity {
         this.setCustomNameVisible(true);
         this.setSilent(true);
         this.setNoGravity(true);
-        this.setCustomName(new TranslatableText("text.buildbattle.floor_change").formatted(Formatting.GOLD));
+        this.setCustomName(Text.translatable("text.buildbattle.floor_change").formatted(Formatting.GOLD));
         this.villagerData = new VillagerData(Registry.VILLAGER_TYPE.getRandom(this.getRandom()).get().value(), Registry.VILLAGER_PROFESSION.getRandom(this.getRandom()).get().value(), 3);
     }
 

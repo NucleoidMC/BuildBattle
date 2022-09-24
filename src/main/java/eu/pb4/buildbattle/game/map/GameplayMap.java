@@ -2,7 +2,7 @@ package eu.pb4.buildbattle.game.map;
 
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -63,7 +63,7 @@ public class GameplayMap {
 
             this.template = template;
         } catch (IOException e) {
-            throw new GameOpenException(new LiteralText("Failed to load template"), e);
+            throw new GameOpenException(Text.literal("Failed to load template"), e);
         }
     }
 

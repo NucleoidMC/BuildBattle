@@ -12,7 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
@@ -24,7 +24,7 @@ public class BbUtils {
     }
 
     public static MutableText getText(String type, String path, Object... values) {
-        return new TranslatableText(Util.createTranslationKey(type, new Identifier(BuildBattle.ID, path)), values);
+        return Text.translatable(Util.createTranslationKey(type, new Identifier(BuildBattle.ID, path)), values);
     }
 
     public static boolean equalsOrInstance(Object tested, Object... objects) {
