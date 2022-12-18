@@ -253,7 +253,7 @@ public class VotingStage {
                         this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX,
                                 Text.translatable("text.buildbattle.next_arena").formatted(Formatting.BLUE)));
 
-                        this.gameSpace.getPlayers().playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING, SoundCategory.MASTER, 10f, 1);
+                        this.gameSpace.getPlayers().playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), SoundCategory.MASTER, 10f, 1);
                         this.allowVoting = true;
                         this.phase = Phase.VOTING;
                     } else {

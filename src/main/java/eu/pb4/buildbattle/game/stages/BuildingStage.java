@@ -9,7 +9,6 @@ import eu.pb4.buildbattle.game.PlayerData;
 import eu.pb4.buildbattle.game.TimerBar;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import eu.pb4.buildbattle.game.map.GameplayMap;
-import eu.pb4.buildbattle.mixin.BucketItemAccessor;
 import eu.pb4.buildbattle.other.BbUtils;
 import eu.pb4.buildbattle.other.FormattingUtil;
 import eu.pb4.buildbattle.other.ParticleOutlineRenderer;
@@ -20,7 +19,6 @@ import eu.pb4.buildbattle.ui.UtilsUi;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.boss.BossBar;
@@ -36,6 +34,7 @@ import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleEffect;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -47,11 +46,10 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.explosion.Explosion;
+import org.joml.Vector3f;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.plasmid.game.GameSpace;
@@ -241,8 +239,8 @@ public class BuildingStage {
         if (packet instanceof CreativeInventoryActionC2SPacket packet1) {
             ItemStack stack = packet1.getItemStack();
 
-            if (!Registry.ITEM.getId(stack.getItem()).getNamespace().equals(BuildBattle.ID)) {
-                if (stack.getItem().getGroup() == null || stack.getItem().getRegistryEntry().isIn(BuildBattle.BANNED_ITEMS)) {
+            if (!Registries.ITEM.getId(stack.getItem()).getNamespace().equals(BuildBattle.ID)) {
+                if (stack.getItem().getRegistryEntry().isIn(BuildBattle.BANNED_ITEMS)) {
                     stack = ItemStack.EMPTY;
                 } else {
                     if (stack.getItem() instanceof BlockItem || (stack.getItem() instanceof BucketItem && !(stack.getItem() instanceof EntityBucketItem))) {
@@ -517,8 +515,8 @@ public class BuildingStage {
                             .append(Text.literal(theme)), ((float) ticksLeft) / (this.buildingTimeDuration - this.themeVotingTime));
 
                     if (time % 10 == 0) {
-                        var borderEffect = new DustParticleEffect(new Vec3f(0.8f, 0.8f, 0.8f), 2.0F);
-                        var selectionEffect = new DustParticleEffect(new Vec3f(0.8f, 0.3f, 0.3f), 1.8F);
+                        var borderEffect = new DustParticleEffect(new Vector3f(0.8f, 0.8f, 0.8f), 2.0F);
+                        var selectionEffect = new DustParticleEffect(new Vector3f(0.8f, 0.3f, 0.3f), 1.8F);
                         for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
                             var data = this.participants.get(PlayerRef.of(player));
                             if (data != null) {
@@ -530,7 +528,7 @@ public class BuildingStage {
                             }
                         }
 
-                        ParticleEffect effect2 = new DustParticleEffect(new Vec3f(0f, 1f, 0f), 2.0F);
+                        ParticleEffect effect2 = new DustParticleEffect(new Vector3f(0f, 1f, 0f), 2.0F);
                         for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
                             PlayerData data = this.participants.get(PlayerRef.of(player));
                             if (data != null) {

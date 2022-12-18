@@ -95,7 +95,7 @@ public class ThemeVotingManager {
                     .setName(Text.literal(theme).formatted(Formatting.YELLOW).append(Text.literal(" - " + percent + "%"))).hideFlags();
 
             icon.setCallback((x, y, z) -> {
-                this.player.playSound(SoundEvents.UI_BUTTON_CLICK, SoundCategory.MASTER, 0.5f, 1);
+                this.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.MASTER, 0.5f, 1);
 
                 if (this.vote != null) {
                     ThemeVotingManager.this.votes.put(this.vote, ThemeVotingManager.this.votes.getInt(this.vote) - 1);

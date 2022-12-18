@@ -6,7 +6,8 @@ import eu.pb4.buildbattle.custom.items.WrappedItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.Registries;
 
 import static eu.pb4.buildbattle.other.BbUtils.id;
 
@@ -39,7 +40,7 @@ public class BBItems {
     }
 
     private static <T extends Item> T register(String id, T item) {
-        Registry.register(Registry.ITEM, id(id), item);
+        Registry.register(Registries.ITEM, id(id), item);
         return item;
     };
 }

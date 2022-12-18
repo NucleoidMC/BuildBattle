@@ -2,29 +2,28 @@ package eu.pb4.buildbattle.custom;
 
 import com.mojang.datafixers.util.Pair;
 import eu.pb4.buildbattle.game.map.BuildArena;
-import eu.pb4.buildbattle.mixin.BucketItemAccessor;
 import eu.pb4.buildbattle.mixin.VillagerEntityAccessor;
 import eu.pb4.buildbattle.other.BbUtils;
-import eu.pb4.polymer.api.entity.PolymerEntity;
+import eu.pb4.polymer.core.api.entity.PolymerEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.block.*;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.village.VillagerData;
 import net.minecraft.world.World;
 
 import java.util.List;
-import java.util.Map;
 
 public class FloorChangingEntity extends MobEntity implements PolymerEntity {
     public static EntityType<FloorChangingEntity> TYPE = FabricEntityTypeBuilder.<FloorChangingEntity>create(SpawnGroup.MISC, FloorChangingEntity::new).dimensions(EntityDimensions.fixed(0.75f, 2f)).build();
@@ -40,7 +39,7 @@ public class FloorChangingEntity extends MobEntity implements PolymerEntity {
         this.setSilent(true);
         this.setNoGravity(true);
         this.setCustomName(Text.translatable("text.buildbattle.floor_change").formatted(Formatting.GOLD));
-        this.villagerData = new VillagerData(Registry.VILLAGER_TYPE.getRandom(this.getRandom()).get().value(), Registry.VILLAGER_PROFESSION.getRandom(this.getRandom()).get().value(), 3);
+        this.villagerData = new VillagerData(Registries.VILLAGER_TYPE.getRandom(this.getRandom()).get().value(), Registries.VILLAGER_PROFESSION.getRandom(this.getRandom()).get().value(), 3);
     }
 
     public FloorChangingEntity(World world) {
@@ -76,18 +75,18 @@ public class FloorChangingEntity extends MobEntity implements PolymerEntity {
     public void attachLeash(Entity entity, boolean sendPacket) { }
 
     @Override
-    public EntityType<?> getPolymerEntityType() {
+    public EntityType<?> getPolymerEntityType(ServerPlayerEntity player) {
         return EntityType.VILLAGER;
     }
 
     @Override
-    public List<Pair<EquipmentSlot, ItemStack>> getPolymerVisibleEquipment(Map<EquipmentSlot, ItemStack> map) {
+    public List<Pair<EquipmentSlot, ItemStack>> getPolymerVisibleEquipment(List<Pair<EquipmentSlot, ItemStack>> map, ServerPlayerEntity player) {
         return List.of(Pair.of(EquipmentSlot.MAINHAND, this.lastUsedFloor));
     }
 
     @Override
-    public void modifyTrackedData(List<DataTracker.Entry<?>> data) {
-        data.add(new DataTracker.Entry<>(VillagerEntityAccessor.get(), this.villagerData));
+    public void modifyRawTrackedData(List<DataTracker.SerializedEntry<?>> data, ServerPlayerEntity player, boolean initial) {
+        data.add(DataTracker.SerializedEntry.of(VillagerEntityAccessor.get(), this.villagerData));
     }
 
     @Override
