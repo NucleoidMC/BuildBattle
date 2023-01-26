@@ -5,11 +5,11 @@
     "translate": "gameType.buildbattle.duo"
   },
   "description": [
-    "<yellow><lang:'description.buildbattle.duo.1':'8'>",
-    "<yellow><lang:'description.buildbattle.duo.2'>",
-    "<yellow><lang:'description.buildbattle.duo.3'>",
-    "<yellow><lang:'description.buildbattle.duo.4'>",
-    "<yellow><lang:'description.buildbattle.duo.5'>"
+    "<lang:'description.buildbattle.duo.1':'8'>",
+    "<lang:'description.buildbattle.duo.2'>",
+    "<lang:'description.buildbattle.duo.3'>",
+    "<lang:'description.buildbattle.duo.4'>",
+    "<lang:'description.buildbattle.duo.5'>"
   ],
   "icon": {
     "id": "bricks",
