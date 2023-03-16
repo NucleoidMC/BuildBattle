@@ -1,11 +1,12 @@
 package eu.pb4.buildbattle.mixin;
 
 import eu.pb4.buildbattle.other.MarkedPacket;
+import net.minecraft.network.packet.s2c.play.BundleS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-@Mixin({EntityEquipmentUpdateS2CPacket.class})
+@Mixin({EntityEquipmentUpdateS2CPacket.class, BundleS2CPacket.class})
 public class PacketMixin implements MarkedPacket {
     @Unique boolean bbIsMarked = false;
 

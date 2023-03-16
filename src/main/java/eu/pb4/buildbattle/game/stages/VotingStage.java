@@ -11,6 +11,7 @@ import eu.pb4.buildbattle.game.map.GameplayMap;
 import eu.pb4.buildbattle.other.FormattingUtil;
 import eu.pb4.buildbattle.other.MarkedPacket;
 import eu.pb4.buildbattle.other.TextHelper;
+import eu.pb4.polymer.core.api.entity.PolymerEntityUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.boss.BossBar;
@@ -19,10 +20,9 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.item.FireworkRocketItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.Packet;
-import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerAbilitiesS2CPacket;
-import net.minecraft.network.packet.s2c.play.UpdateSelectedSlotS2CPacket;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -112,25 +112,50 @@ public class VotingStage {
         });
     }
 
-    private ActionResult onServerPacket(ServerPlayerEntity player, Packet<?> packet) {
+    protected ActionResult onServerPacket(ServerPlayerEntity player, Packet<?> packet) {
         if (MarkedPacket.is(packet)) {
             return ActionResult.PASS;
         }
 
-        if (packet instanceof EntityEquipmentUpdateS2CPacket equipmentUpdate) {
-            for (var pair : equipmentUpdate.getEquipmentList()) {
-                if (pair.getFirst() == EquipmentSlot.MAINHAND) {
-                    var list = new ArrayList<>(equipmentUpdate.getEquipmentList());
-                    list.remove(pair);
-                    list.add(new Pair<>(EquipmentSlot.MAINHAND, ItemStack.EMPTY));
+        var x = transformPacket(player, packet);
 
-                    player.networkHandler.sendPacket(MarkedPacket.mark(new EntityEquipmentUpdateS2CPacket(equipmentUpdate.getId(), list)));
-                    return ActionResult.FAIL;
+        if (x == null) {
+            return ActionResult.FAIL;
+        } else if (x == packet) {
+            return ActionResult.PASS;
+        } else {
+            player.networkHandler.sendPacket(MarkedPacket.mark(x));
+            return ActionResult.FAIL;
+        }
+    }
+
+
+    protected Packet<ClientPlayPacketListener> transformPacket(ServerPlayerEntity player, Packet<?> packet) {
+        if (packet instanceof BundleS2CPacket bundleS2CPacket) {
+            var list = new ArrayList<Packet<ClientPlayPacketListener>>();
+
+            for (var x : bundleS2CPacket.getPackets()) {
+                var y = transformPacket(player, x);
+
+                if (y != null) {
+                    list.add(y);
                 }
+            }
+
+            return new BundleS2CPacket(list);
+        } else if (packet instanceof EntityEquipmentUpdateS2CPacket equipmentUpdate) {
+            var list = new ArrayList<Pair<EquipmentSlot, ItemStack>>();
+
+            for (var pair : equipmentUpdate.getEquipmentList()) {
+                list.add(new Pair<>(pair.getFirst(), ItemStack.EMPTY));
+            }
+
+            if (list.size() > 0) {
+                return new EntityEquipmentUpdateS2CPacket(equipmentUpdate.getId(), list);
             }
         }
 
-        return ActionResult.PASS;
+        return (Packet<ClientPlayPacketListener>) packet;
     }
 
     private TypedActionResult<ItemStack> onItemUse(ServerPlayerEntity player, Hand hand) {

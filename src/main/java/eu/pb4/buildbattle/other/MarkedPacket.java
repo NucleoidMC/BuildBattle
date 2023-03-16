@@ -1,6 +1,7 @@
 package eu.pb4.buildbattle.other;
 
-import net.minecraft.network.Packet;
+
+import net.minecraft.network.packet.Packet;
 
 public interface MarkedPacket {
     boolean bb_isMarked();
