@@ -13,11 +13,13 @@ public interface MarkedPacket {
         if (packet instanceof MarkedPacket markedPacket) {
             return markedPacket.bb_isMarked();
         }
-        return false;
+        return true;
     }
 
     static <T extends Packet<?>> T mark(T packet) {
-        ((MarkedPacket) packet).bb_mark();
+        if (packet instanceof MarkedPacket markedPacket) {
+            markedPacket.bb_mark();
+        }
         return packet;
     }
 }

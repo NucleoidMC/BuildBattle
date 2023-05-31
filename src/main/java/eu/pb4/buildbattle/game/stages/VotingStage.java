@@ -138,7 +138,7 @@ public class VotingStage {
                 var y = transformPacket(player, x);
 
                 if (y != null) {
-                    list.add(y);
+                    list.add(MarkedPacket.mark(y));
                 }
             }
 
