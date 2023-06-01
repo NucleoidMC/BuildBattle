@@ -52,11 +52,11 @@
   "description.buildbattle.standard.7": "",
   "description.buildbattle.standard.8": "",
 
-  "description.buildbattle.standard.1": "Masz %s minut, aby zbudować coś",
-  "description.buildbattle.standard.2": "zwięzanego z podanym motywem!",
-  "description.buildbattle.standard.3": "Po zakończeniu czasu, głosuj ",
-  "description.buildbattle.standard.4": "na budowle innych graczy.",
-  "description.buildbattle.standard.5": "Najlepsze duo wygrywa!",
+  "description.buildbattle.duo.1": "Masz %s minut, aby zbudować coś",
+  "description.buildbattle.duo.2": "zwięzanego z podanym motywem!",
+  "description.buildbattle.duo.3": "Po zakończeniu czasu, głosuj ",
+  "description.buildbattle.duo.4": "na budowle innych graczy.",
+  "description.buildbattle.duo.5": "Najlepsze duo wygrywa!",
   "description.buildbattle.duo.6": "",
   "description.buildbattle.duo.7": "",
   "description.buildbattle.duo.8": ""
