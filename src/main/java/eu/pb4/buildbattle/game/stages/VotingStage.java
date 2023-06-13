@@ -9,9 +9,7 @@ import eu.pb4.buildbattle.game.TimerBar;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import eu.pb4.buildbattle.game.map.GameplayMap;
 import eu.pb4.buildbattle.other.FormattingUtil;
-import eu.pb4.buildbattle.other.MarkedPacket;
 import eu.pb4.buildbattle.other.TextHelper;
-import eu.pb4.polymer.core.api.entity.PolymerEntityUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.boss.BossBar;
@@ -36,7 +34,6 @@ import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
 import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
 import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
-import xyz.nucleoid.plasmid.game.player.PlayerSet;
 import xyz.nucleoid.plasmid.game.rule.GameRuleType;
 import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.plasmid.util.PlayerRef;
@@ -112,8 +109,10 @@ public class VotingStage {
         });
     }
 
+    private volatile boolean skipPacket = false;
+
     protected ActionResult onServerPacket(ServerPlayerEntity player, Packet<?> packet) {
-        if (MarkedPacket.is(packet)) {
+        if (skipPacket) {
             return ActionResult.PASS;
         }
 
@@ -124,7 +123,9 @@ public class VotingStage {
         } else if (x == packet) {
             return ActionResult.PASS;
         } else {
-            player.networkHandler.sendPacket(MarkedPacket.mark(x));
+            skipPacket = true;
+            player.networkHandler.sendPacket(x);
+            skipPacket = false;
             return ActionResult.FAIL;
         }
     }
@@ -134,15 +135,21 @@ public class VotingStage {
         if (packet instanceof BundleS2CPacket bundleS2CPacket) {
             var list = new ArrayList<Packet<ClientPlayPacketListener>>();
 
+            boolean needChanging = false;
+
             for (var x : bundleS2CPacket.getPackets()) {
                 var y = transformPacket(player, x);
 
                 if (y != null) {
-                    list.add(MarkedPacket.mark(y));
+                    list.add(y);
+                }
+
+                if (x != y) {
+                    needChanging = true;
                 }
             }
 
-            return new BundleS2CPacket(list);
+            return needChanging ? new BundleS2CPacket(list) : bundleS2CPacket;
         } else if (packet instanceof EntityEquipmentUpdateS2CPacket equipmentUpdate) {
             var list = new ArrayList<Pair<EquipmentSlot, ItemStack>>();
 
