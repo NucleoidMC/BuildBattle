@@ -376,7 +376,7 @@ public class BuildingStage {
 
             if (state != null) {
                 for (var pos : BlockBounds.of(data.selectionStart, data.selectionEnd)) {
-                    player.world.setBlockState(pos, state);
+                    player.getWorld().setBlockState(pos, state);
                 }
             }
 

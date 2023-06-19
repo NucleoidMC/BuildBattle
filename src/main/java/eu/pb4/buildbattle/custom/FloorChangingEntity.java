@@ -98,7 +98,7 @@ public class FloorChangingEntity extends MobEntity implements PolymerEntity {
                     this.lastUsedFloor = player.getStackInHand(hand);
                     this.equipStack(EquipmentSlot.MAINHAND, this.lastUsedFloor);
                     for (BlockPos blockPos : this.buildArena.ground) {
-                        this.world.setBlockState(blockPos, state);
+                        this.getWorld().setBlockState(blockPos, state);
                     }
 
                     return ActionResult.SUCCESS;
