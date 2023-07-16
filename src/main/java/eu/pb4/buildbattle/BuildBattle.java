@@ -7,6 +7,7 @@ import eu.pb4.buildbattle.themes.ThemesRegistry;
 import eu.pb4.polymer.core.api.entity.PolymerEntityUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKeys;
@@ -36,13 +37,13 @@ public class BuildBattle implements ModInitializer {
 
     public static final GameRuleType CREATIVE_LIMIT = GameRuleType.create();
 
-    public static final TagKey BANNED_ITEMS = TagKey.of(RegistryKeys.ITEM, new Identifier(ID, "banned"));
+    public static final TagKey<Item> BANNED_ITEMS = TagKey.of(RegistryKeys.ITEM, new Identifier(ID, "banned"));
 
     @Override
     public void onInitialize() {
         BBItems.register();
         Registry.register(Registries.ENTITY_TYPE, new Identifier(ID, "floor_changer"), FloorChangingEntity.TYPE);
-        FabricDefaultAttributeRegistry.register(FloorChangingEntity.TYPE, FloorChangingEntity.createMobAttributes());
+        FabricDefaultAttributeRegistry.register(FloorChangingEntity.TYPE, FloorChangingEntity.createLivingAttributes());
         PolymerEntityUtils.registerType(FloorChangingEntity.TYPE);
 
         ThemesRegistry.register();

@@ -146,6 +146,7 @@ public class BuildingStage {
         for (BuildArena buildArena : this.gameMap.buildArena) {
             buildArena.spawnEntity(world, this.config.mapConfig().entityRotation());
         }
+        gameSpace.setAttachment("game_active", this);
     }
 
     public static void open(GameSpace gameSpace, BuildBattleConfig config, Runnable runAfterTeleporting) {
@@ -185,8 +186,6 @@ public class BuildingStage {
             game.listen(ItemUseEvent.EVENT, active::onItemUse);
             game.listen(BlockUseEvent.EVENT, active::onBlockUse);
             game.listen(BuildBattle.ON_BUCKET_USAGE, active::onFluidPlace);
-
-            game.listen(ItemUseEvent.EVENT, active::onItemUse);
 
             game.listen(PlayerAttackEntityEvent.EVENT, active::onEntityDamage);
             game.listen(GameActivityEvents.TICK, active::tick);
@@ -431,7 +430,9 @@ public class BuildingStage {
             if (this.gameSpace.getPlayers().contains(ref)) {
                 ref.ifOnline(world, (p) -> {
                     this.spawnParticipant(p);
-                    this.themeVotingManager.addPlayer(p);
+                    if (this.themeVotingManager != null) {
+                        this.themeVotingManager.addPlayer(p);
+                    }
                 });
 
             }
@@ -491,8 +492,10 @@ public class BuildingStage {
                     this.lockBuilding = true;
                     this.timerBar.setColor(BossBar.Color.RED);
                     this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.times_up"), 0);
+                    gameSpace.setAttachment("game_active", null);
+
                     for (BuildArena buildArena : this.gameMap.buildArena) {
-                        buildArena.removeEntity();
+                        buildArena.removeEntity(world);
                     }
                     this.phase = Phase.WAITING;
                     this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.5f);

@@ -30,7 +30,6 @@ public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfi
                 .setGenerator(waitingMap.asGenerator())
                 .setGameRule(GameRules.DO_WEATHER_CYCLE, false);
 
-
         return context.openWithWorld(worldConfig, (game, world) -> {
             WaitingStage waiting = new WaitingStage(game.getGameSpace(), waitingMap, config, world);
 

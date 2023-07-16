@@ -7,6 +7,7 @@
     "entity_rotation": -45
   },
   "theme": "buildbattle:normal",
+  "theme_voting": false,
   "players": {
     "min": 1,
     "max": 24

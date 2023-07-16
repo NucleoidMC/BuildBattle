@@ -26,7 +26,7 @@ public class BuildArena {
     public final Set<UUID> playersUuid = new HashSet<>();
     private final Vec3d entityPos;
     public int score = 0;
-    private FloorChangingEntity entity = null;
+    private UUID entityUuid;
 
     public BuildArena(BlockBounds area, BlockBounds ground, BlockBounds bounds, BlockBounds spawn, Vec3d entityPos) {
         this.buildingArea = area;
@@ -74,18 +74,22 @@ public class BuildArena {
     }
 
     public void spawnEntity(ServerWorld world, float yaw) {
-        FloorChangingEntity entity = new FloorChangingEntity(world, this);
-        entity.setPos(this.entityPos.x, this.entityPos.y, this.entityPos.z);
+        FloorChangingEntity entity = new FloorChangingEntity(world);
+        entity.setPosition(this.entityPos.x, this.entityPos.y, this.entityPos.z);
         world.spawnEntity(entity);
         entity.setYaw(yaw);
         entity.setBodyYaw(yaw);
         entity.setHeadYaw(yaw);
-        this.entity = entity;
+        this.entityUuid = entity.getUuid();
     }
 
-    public void removeEntity() {
-        if (this.entity != null) {
-            this.entity.remove(Entity.RemovalReason.DISCARDED);
+    public void removeEntity(ServerWorld world) {
+        if (this.entityUuid != null) {
+            var entity = world.getEntity(this.entityUuid);
+
+            if (entity != null) {
+                entity.remove(Entity.RemovalReason.DISCARDED);
+            }
         }
     }
 
