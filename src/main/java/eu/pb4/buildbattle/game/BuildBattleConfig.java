@@ -1,19 +1,20 @@
 package eu.pb4.buildbattle.game;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.Identifier;
 import eu.pb4.buildbattle.game.map.MapConfig;
-import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
+import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
 
 import java.util.Optional;
 
-public record BuildBattleConfig(PlayerConfig playerConfig,
+public record BuildBattleConfig(WaitingLobbyConfig playerConfig,
                                 MapConfig mapConfig, int timeLimitSecs, int votingTimeSecs,
                                 int teamSize, Identifier theme, boolean themeVoting, Optional<String> forcedTheme, String gamemode, boolean enableTools) {
 
-    public static final Codec<BuildBattleConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            PlayerConfig.CODEC.fieldOf("players").forGetter(config -> config.playerConfig),
+    public static final MapCodec<BuildBattleConfig> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            WaitingLobbyConfig.CODEC.fieldOf("players").forGetter(config -> config.playerConfig),
             MapConfig.CODEC.fieldOf("map").forGetter(config -> config.mapConfig),
             Codec.INT.fieldOf("time_limit_secs").forGetter(config -> config.timeLimitSecs),
             Codec.INT.fieldOf("voting_time_secs").forGetter(config -> config.timeLimitSecs),

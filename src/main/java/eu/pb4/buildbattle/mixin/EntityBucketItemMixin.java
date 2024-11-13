@@ -11,16 +11,16 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xyz.nucleoid.plasmid.game.manager.GameSpaceManager;
-import xyz.nucleoid.plasmid.game.manager.ManagedGameSpace;
+import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
+import xyz.nucleoid.stimuli.event.EventResult;
 
 @Mixin(EntityBucketItem.class)
 public class EntityBucketItemMixin {
 
     @Inject(method = "onEmptied", at = @At("HEAD"), cancellable = true)
     private void onEmptied(PlayerEntity player, World world, ItemStack stack, BlockPos pos, CallbackInfo ci) {
-        ManagedGameSpace gameSpace = GameSpaceManager.get().byWorld(world);
-        if (gameSpace != null && gameSpace.getBehavior().testRule(BuildBattle.CREATIVE_LIMIT) != ActionResult.PASS) {
+        var gameSpace = GameSpaceManager.get().byWorld(world);
+        if (gameSpace != null && gameSpace.getBehavior().testRule(BuildBattle.CREATIVE_LIMIT) != EventResult.PASS) {
             ci.cancel();
         }
     }

@@ -1,8 +1,8 @@
 package eu.pb4.buildbattle.game;
 
 import net.minecraft.entity.boss.BossBar;
-import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
-import xyz.nucleoid.plasmid.game.common.widget.BossBarWidget;
+import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.api.game.common.widget.BossBarWidget;
 import net.minecraft.text.Text;
 
 public final class TimerBar {

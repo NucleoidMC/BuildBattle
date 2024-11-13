@@ -92,10 +92,10 @@ public class ThemeVotingManager {
             int percent = Math.round(((float) votes / allVotes) * 100);
 
             GuiElementBuilder icon = new GuiElementBuilder(Items.BRICKS, Math.max(votes, 1))
-                    .setName(Text.literal(theme).formatted(Formatting.YELLOW).append(Text.literal(" - " + percent + "%"))).hideFlags();
+                    .setName(Text.literal(theme).formatted(Formatting.YELLOW).append(Text.literal(" - " + percent + "%"))).hideDefaultTooltip();
 
             icon.setCallback((x, y, z) -> {
-                this.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.MASTER, 0.5f, 1);
+                this.player.playSoundToPlayer(SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.MASTER, 0.5f, 1);
 
                 if (this.vote != null) {
                     ThemeVotingManager.this.votes.put(this.vote, ThemeVotingManager.this.votes.getInt(this.vote) - 1);
@@ -118,11 +118,9 @@ public class ThemeVotingManager {
             this.setSlot(relativePos, icon);
             int slots = Math.round(percentFloat * 8);
 
-            GuiElementBuilder filled = new GuiElementBuilder(filledItem)
-                    .setName(Text.empty()).hideFlags();
+            GuiElementBuilder filled = new GuiElementBuilder(filledItem).hideTooltip();
 
-            GuiElementBuilder empty = new GuiElementBuilder(Items.GRAY_STAINED_GLASS_PANE)
-                    .setName(Text.empty()).hideFlags();
+            GuiElementBuilder empty = new GuiElementBuilder(Items.GRAY_STAINED_GLASS_PANE).hideTooltip();
 
             for (int x = 1; x <= slots; x++) {
                 this.setSlot(relativePos + x, filled);

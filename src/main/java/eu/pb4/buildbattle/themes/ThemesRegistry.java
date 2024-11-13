@@ -17,7 +17,7 @@ import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import com.mojang.datafixers.util.Pair;
-import xyz.nucleoid.plasmid.registry.TinyRegistry;
+import xyz.nucleoid.plasmid.api.util.TinyRegistry;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class ThemesRegistry {
         serverData.registerReloadListener(new SimpleSynchronousResourceReloadListener() {
             @Override
             public Identifier getFabricId() {
-                return new Identifier(BuildBattle.ID, "themes");
+                return Identifier.of(BuildBattle.ID, "themes");
             }
 
             @Override
@@ -69,7 +69,7 @@ public class ThemesRegistry {
     private static Identifier identifierFromPath(Identifier location) {
         String path = location.getPath();
         path = path.substring("themes/".length(), path.length() - ".json".length());
-        return new Identifier(location.getNamespace(), path);
+        return Identifier.of(location.getNamespace(), path);
     }
 
     @Nullable

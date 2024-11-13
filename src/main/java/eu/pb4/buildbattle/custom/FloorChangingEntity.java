@@ -1,16 +1,15 @@
 package eu.pb4.buildbattle.custom;
 
 import com.mojang.datafixers.util.Pair;
+import eu.pb4.buildbattle.BuildBattle;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import eu.pb4.buildbattle.game.stages.BuildingStage;
 import eu.pb4.buildbattle.mixin.VillagerEntityAccessor;
 import eu.pb4.buildbattle.other.BbUtils;
 import eu.pb4.polymer.core.api.entity.PolymerEntity;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -22,15 +21,14 @@ import net.minecraft.util.Arm;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.village.VillagerData;
 import net.minecraft.world.World;
-import xyz.nucleoid.plasmid.game.manager.GameSpaceManager;
+import xyz.nucleoid.packettweaker.PacketContext;
+import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 
 import java.util.List;
 
 public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
-    public static EntityType<FloorChangingEntity> TYPE = FabricEntityTypeBuilder.<FloorChangingEntity>create(SpawnGroup.MISC, FloorChangingEntity::new).dimensions(EntityDimensions.fixed(0.75f, 2f)).build();
     private final VillagerData villagerData;
     private ItemStack lastUsedFloor = Items.GRASS_BLOCK.getDefaultStack();
 
@@ -44,7 +42,7 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
     }
 
     public FloorChangingEntity(World world) {
-        this(TYPE, world);
+        this(BBRegistry.FLOOR_CHANGER_ENTITY, world);
     }
 
     @Override
@@ -78,12 +76,10 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
     }
 
     @Override
-    public void equipStack(EquipmentSlot slot, ItemStack stack) {
-
-    }
+    public void equipStack(EquipmentSlot slot, ItemStack stack) {}
 
     @Override
-    public EntityType<?> getPolymerEntityType(ServerPlayerEntity player) {
+    public EntityType<?> getPolymerEntityType(PacketContext context) {
         return EntityType.VILLAGER;
     }
 
@@ -103,7 +99,7 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
         BuildArena buildArena = null;
         var game = GameSpaceManager.get().byWorld(this.getWorld());
         if (game != null) {
-            BuildingStage stage = game.getAttachment("game_active");
+            BuildingStage stage = game.getAttachment(BuildBattle.ACTIVE_GAME);
 
             if (stage != null) {
                 buildArena = stage.gameMap.getArena(this.getBlockPos());

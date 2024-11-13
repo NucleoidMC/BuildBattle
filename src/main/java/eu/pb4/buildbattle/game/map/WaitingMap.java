@@ -9,8 +9,8 @@ import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.map_templates.MapTemplateSerializer;
-import xyz.nucleoid.plasmid.game.GameOpenException;
-import xyz.nucleoid.plasmid.game.world.generator.TemplateChunkGenerator;
+import xyz.nucleoid.plasmid.api.game.GameOpenException;
+import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -37,8 +37,8 @@ public class WaitingMap {
     }
 
     public Vec3d getSpawnLocation() {
-        double x = Math.random() * this.spawnArea.getXLength();
-        double z = Math.random() * this.spawnArea.getZLength();
+        double x = Math.random() * this.spawnArea.getLengthX();
+        double z = Math.random() * this.spawnArea.getLengthZ();
 
         return new Vec3d(this.spawnArea.minX + x, this.spawnArea.minY, this.spawnArea.minZ + z);
     }

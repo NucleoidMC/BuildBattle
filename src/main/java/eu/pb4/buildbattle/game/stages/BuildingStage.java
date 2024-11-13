@@ -1,7 +1,7 @@
 package eu.pb4.buildbattle.game.stages;
 
 import eu.pb4.buildbattle.BuildBattle;
-import eu.pb4.buildbattle.custom.BBItems;
+import eu.pb4.buildbattle.custom.BBRegistry;
 import eu.pb4.buildbattle.custom.FloorChangingEntity;
 import eu.pb4.buildbattle.custom.items.WrappedItem;
 import eu.pb4.buildbattle.game.BuildBattleConfig;
@@ -44,6 +44,7 @@ import net.minecraft.util.*;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
@@ -52,12 +53,14 @@ import net.minecraft.world.explosion.Explosion;
 import org.joml.Vector3f;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.map_templates.BlockBounds;
-import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
-import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
-import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
-import xyz.nucleoid.plasmid.game.rule.GameRuleType;
-import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.plasmid.api.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.api.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.api.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.api.game.player.JoinIntent;
+import xyz.nucleoid.plasmid.api.game.rule.GameRuleType;
+import xyz.nucleoid.plasmid.api.util.PlayerRef;
+import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.block.BlockBreakEvent;
 import xyz.nucleoid.stimuli.event.block.BlockPlaceEvent;
 import xyz.nucleoid.stimuli.event.block.BlockUseEvent;
@@ -70,10 +73,7 @@ import xyz.nucleoid.stimuli.event.player.PlayerSwingHandEvent;
 import xyz.nucleoid.stimuli.event.world.ExplosionDetonatedEvent;
 import xyz.nucleoid.stimuli.event.world.FluidFlowEvent;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BuildingStage {
@@ -92,7 +92,6 @@ public class BuildingStage {
     private ThemeVotingManager themeVotingManager;
     private boolean lockBuilding = true;
     private Phase phase = Phase.THEME_VOTING;
-    private boolean lastActionBlockBreak = false;
 
     private BuildingStage(GameSpace gameSpace, ServerWorld world, GameplayMap map, GlobalWidgets widgets, BuildBattleConfig config, Set<PlayerRef> participants) {
         this.gameSpace = gameSpace;
@@ -146,7 +145,7 @@ public class BuildingStage {
         for (BuildArena buildArena : this.gameMap.buildArena) {
             buildArena.spawnEntity(world, this.config.mapConfig().entityRotation());
         }
-        gameSpace.setAttachment("game_active", this);
+        gameSpace.setAttachment(BuildBattle.ACTIVE_GAME, this);
     }
 
     public static void open(GameSpace gameSpace, BuildBattleConfig config, Runnable runAfterTeleporting) {
@@ -164,21 +163,22 @@ public class BuildingStage {
             GlobalWidgets widgets = GlobalWidgets.addTo(game);
             BuildingStage active = new BuildingStage(gameSpace, world, map, widgets, config, participants);
 
-            game.setRule(GameRuleType.CRAFTING, ActionResult.FAIL);
-            game.setRule(GameRuleType.PORTALS, ActionResult.FAIL);
-            game.setRule(GameRuleType.PVP, ActionResult.FAIL);
-            game.setRule(GameRuleType.HUNGER, ActionResult.FAIL);
-            game.setRule(GameRuleType.FALL_DAMAGE, ActionResult.FAIL);
-            game.setRule(GameRuleType.INTERACTION, ActionResult.PASS);
-            game.setRule(GameRuleType.BLOCK_DROPS, ActionResult.FAIL);
-            game.setRule(BuildBattle.CREATIVE_LIMIT, ActionResult.FAIL);
+            game.setRule(GameRuleType.CRAFTING, EventResult.DENY);
+            game.setRule(GameRuleType.PORTALS, EventResult.DENY);
+            game.setRule(GameRuleType.PVP, EventResult.DENY);
+            game.setRule(GameRuleType.HUNGER, EventResult.DENY);
+            game.setRule(GameRuleType.FALL_DAMAGE, EventResult.DENY);
+            game.setRule(GameRuleType.INTERACTION, EventResult.PASS);
+            game.setRule(GameRuleType.BLOCK_DROPS, EventResult.DENY);
+            game.setRule(BuildBattle.CREATIVE_LIMIT, EventResult.DENY);
 
             game.listen(GameActivityEvents.ENABLE, () -> {
                 active.onOpen();
                 gameSpace.getServer().execute(runAfterTeleporting);
             });
 
-            game.listen(GamePlayerEvents.OFFER, offer -> offer.accept(world, Vec3d.ZERO));
+            game.listen(GamePlayerEvents.OFFER, offer -> offer.intent() == JoinIntent.SPECTATE ? offer.accept() : offer.pass());
+            game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, Vec3d.ZERO));
             game.listen(GamePlayerEvents.ADD, active::addPlayer);
             game.listen(GamePlayerEvents.REMOVE, active::removePlayer);
             game.listen(BlockPlaceEvent.BEFORE, active::onPlaceBlock);
@@ -201,62 +201,48 @@ public class BuildingStage {
         });
     }
 
-    private ActionResult onFluidFlow(ServerWorld world, BlockPos blockPos, BlockState state, Direction direction, BlockPos blockPos1, BlockState state1) {
+    private EventResult onFluidFlow(ServerWorld world, BlockPos blockPos, BlockState state, Direction direction, BlockPos blockPos1, BlockState state1) {
         var arena = this.gameMap.getArena(blockPos1);
 
         if (arena != null && arena.buildingArea.contains(blockPos1)) {
-            return ActionResult.PASS;
+            return EventResult.PASS;
         }
 
-        return ActionResult.FAIL;
+        return EventResult.DENY;
     }
 
-    private ActionResult onEntitySpawn(Entity entity) {
+    private EventResult onEntitySpawn(Entity entity) {
         if (entity instanceof ServerPlayerEntity) {
-            return ActionResult.PASS;
+            return EventResult.PASS;
         } else if (BbUtils.equalsOrInstance(entity, ItemEntity.class)) {
-            return ActionResult.FAIL;
+            return EventResult.DENY;
         } else {
             var arena = this.gameMap.getArena(entity.getBlockPos());
 
             if (arena != null) {
                 if (entity.getEntityWorld().getOtherEntities(null, arena.bounds.asBox(), (e) -> !(e instanceof PlayerEntity)).size() > 32) {
-                    return ActionResult.FAIL;
+                    return EventResult.DENY;
                 }
             }
         }
 
-
-        return ActionResult.PASS;
+        return EventResult.PASS;
     }
 
-    private ActionResult onClientPacket(ServerPlayerEntity player, Packet<?> packet) {
+    private EventResult onClientPacket(ServerPlayerEntity player, Packet<?> packet) {
         if (packet instanceof BookUpdateC2SPacket) {
-            return ActionResult.FAIL;
+            return EventResult.DENY;
         }
 
         if (packet instanceof CreativeInventoryActionC2SPacket packet1) {
-            ItemStack stack = packet1.getItemStack();
+            ItemStack stack = packet1.stack();
 
             if (!Registries.ITEM.getId(stack.getItem()).getNamespace().equals(BuildBattle.ID)) {
-                if (stack.getItem().getRegistryEntry().isIn(BuildBattle.BANNED_ITEMS)) {
+                if (stack.isIn(BuildBattle.BANNED_ITEMS)) {
                     stack = ItemStack.EMPTY;
                 } else {
                     if (stack.getItem() instanceof BlockItem || (stack.getItem() instanceof BucketItem && !(stack.getItem() instanceof EntityBucketItem))) {
-                        if (stack.hasNbt()) {
-                            NbtCompound nbt = new NbtCompound();
-                            NbtCompound og = stack.getNbt();
 
-                            assert og != null;
-                            if (og.contains("Patterns", NbtElement.LIST_TYPE)) {
-                                NbtList list = og.getList("Patterns", NbtElement.COMPOUND_TYPE);
-                                if (list.size() <= 6) {
-                                    nbt.put("Patterns", list);
-                                }
-                            }
-
-                            stack.setNbt(nbt);
-                        }
                     } else {
                         stack = WrappedItem.createWrapped(stack);
                     }
@@ -264,44 +250,44 @@ public class BuildingStage {
             }
 
             BbUtils.setCreativeStack(packet1, stack);
-            player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(player.playerScreenHandler.syncId, 0, packet1.getSlot(), stack));
+            player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(player.playerScreenHandler.syncId, 0, packet1.slot(), stack));
         }
 
-        return ActionResult.PASS;
+        return EventResult.PASS;
     }
 
 
-    private ActionResult onEntityDamage(ServerPlayerEntity player, Hand hand, Entity entity, EntityHitResult entityHitResult) {
+    private EventResult onEntityDamage(ServerPlayerEntity player, Hand hand, Entity entity, EntityHitResult entityHitResult) {
         if (entity instanceof FloorChangingEntity) {
-            return ActionResult.FAIL;
+            return EventResult.DENY;
         }
 
         BuildArena arena = this.gameMap.getArena(entity.getBlockPos());
 
         if (arena != null && arena.isBuilder(player)) {
-            return ActionResult.PASS;
+            return EventResult.PASS;
         }
 
-        return ActionResult.FAIL;
+        return EventResult.DENY;
     }
 
-    private void onExplosion(Explosion explosion, boolean particles) {
-        explosion.clearAffectedBlocks();
+    private EventResult onExplosion(Explosion explosion, List<BlockPos> blockPosList) {
+        return EventResult.DENY;
     }
 
-    private TypedActionResult<ItemStack> onItemUse(ServerPlayerEntity player, Hand hand) {
+    private ActionResult onItemUse(ServerPlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
         Item item = stack.getItem();
         if (BbUtils.equalsOrInstance(item, Items.CHORUS_FRUIT, Items.ENDER_PEARL, Items.ENDER_EYE)) {
-            return TypedActionResult.fail(stack);
+            return ActionResult.FAIL;
         }
 
-        if (item == BBItems.UTIL_OPENER) {
+        if (item == BBRegistry.UTIL_OPENER) {
             UtilsUi.open(player, this.participants.get(PlayerRef.of(player)), this);
-            return TypedActionResult.success(stack);
+            return ActionResult.SUCCESS_SERVER;
         }
 
-        return TypedActionResult.pass(stack);
+        return ActionResult.FAIL;
     }
 
     private ActionResult onBlockUse(ServerPlayerEntity player, Hand hand, BlockHitResult hitResult) {
@@ -320,7 +306,7 @@ public class BuildingStage {
         var data = this.participants.get(PlayerRef.of(player));
         if (hand == Hand.MAIN_HAND) {
             data.lastTryFill = System.currentTimeMillis();
-            if (item == BBItems.FILL_WAND) {
+            if (item == BBRegistry.FILL_WAND) {
                 data.selectionStart = hitResult.getBlockPos();
                 if (data.selectionEnd == null) {
                     data.selectionEnd = data.selectionStart;
@@ -335,9 +321,9 @@ public class BuildingStage {
         return ActionResult.PASS;
     }
 
-    private ActionResult onBreakBlock(ServerPlayerEntity player, ServerWorld world, BlockPos pos) {
+    private EventResult onBreakBlock(ServerPlayerEntity player, ServerWorld world, BlockPos pos) {
         if (this.lockBuilding) {
-            return ActionResult.FAIL;
+            return EventResult.DENY;
         }
 
         BuildArena buildArena = this.gameMap.getArena(pos);
@@ -345,20 +331,20 @@ public class BuildingStage {
         if (buildArena != null && buildArena.canBuild(pos, player)) {
             var data = this.participants.get(PlayerRef.of(player));
             data.lastTryFill = System.currentTimeMillis();
-            if (player.getMainHandStack().getItem() == BBItems.FILL_WAND) {
+            if (player.getMainHandStack().getItem() == BBRegistry.FILL_WAND) {
                 data.selectionEnd = pos;
                 if (data.selectionStart == null) {
                     data.selectionStart = data.selectionEnd;
                 }
-                return ActionResult.FAIL;
+                return EventResult.DENY;
             } else if (data.isSelected()) {
                 tryFill(player);
-                return ActionResult.FAIL;
+                return EventResult.DENY;
             }
-            return ActionResult.SUCCESS;
+            return EventResult.ALLOW;
         }
 
-        return ActionResult.FAIL;
+        return EventResult.DENY;
     }
 
     private void tryFill(ServerPlayerEntity player) {
@@ -388,27 +374,26 @@ public class BuildingStage {
             return;
         }
 
-        if (hand == Hand.MAIN_HAND && player.getMainHandStack().getItem() == BBItems.FILL_WAND) {
+        if (hand == Hand.MAIN_HAND && player.getMainHandStack().getItem() == BBRegistry.FILL_WAND) {
             var data = this.participants.get(PlayerRef.of(player));
             if (System.currentTimeMillis() - data.lastTryFill > 500) {
                 data.resetSelection();
             }
-            this.lastActionBlockBreak = false;
         }
     }
 
-    private ActionResult onPlaceBlock(ServerPlayerEntity player, ServerWorld world, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
+    private EventResult onPlaceBlock(ServerPlayerEntity player, ServerWorld world, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
         if (this.lockBuilding) {
-            return ActionResult.FAIL;
+            return EventResult.DENY;
         }
 
         BuildArena buildArena = this.gameMap.getArena(pos);
 
         if (buildArena != null && buildArena.canBuild(pos, player)) {
-            return ActionResult.SUCCESS;
+            return EventResult.ALLOW;
         }
 
-        return ActionResult.FAIL;
+        return EventResult.DENY;
     }
 
     private ActionResult onFluidPlace(ServerPlayerEntity player, BlockPos blockPos) {
@@ -449,13 +434,13 @@ public class BuildingStage {
 
     }
 
-    private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+    private EventResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
         if (this.participants.containsKey(PlayerRef.of(player))) {
             this.spawnParticipant(player);
         } else {
             this.spawnSpectator(player);
         }
-        return ActionResult.FAIL;
+        return EventResult.DENY;
     }
 
     private void spawnParticipant(ServerPlayerEntity player) {
@@ -492,7 +477,7 @@ public class BuildingStage {
                     this.lockBuilding = true;
                     this.timerBar.setColor(BossBar.Color.RED);
                     this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.times_up"), 0);
-                    gameSpace.setAttachment("game_active", null);
+                    gameSpace.setAttachment(BuildBattle.ACTIVE_GAME, null);
 
                     for (BuildArena buildArena : this.gameMap.buildArena) {
                         buildArena.removeEntity(world);
@@ -518,8 +503,8 @@ public class BuildingStage {
                             .append(Text.literal(theme)), ((float) ticksLeft) / (this.buildingTimeDuration - this.themeVotingTime));
 
                     if (time % 10 == 0) {
-                        var borderEffect = new DustParticleEffect(new Vector3f(0.8f, 0.8f, 0.8f), 2.0F);
-                        var selectionEffect = new DustParticleEffect(new Vector3f(0.8f, 0.3f, 0.3f), 1.8F);
+                        var borderEffect = new DustParticleEffect(ColorHelper.fromFloats(0, 0.8f, 0.8f, 0.8f), 2.0F);
+                        var selectionEffect = new DustParticleEffect(ColorHelper.fromFloats(0, 0.8f, 0.3f, 0.3f), 1.8F);
                         for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
                             var data = this.participants.get(PlayerRef.of(player));
                             if (data != null) {
@@ -531,7 +516,7 @@ public class BuildingStage {
                             }
                         }
 
-                        ParticleEffect effect2 = new DustParticleEffect(new Vector3f(0f, 1f, 0f), 2.0F);
+                        ParticleEffect effect2 = new DustParticleEffect(ColorHelper.fromFloats(0, 0f, 1f, 0f), 2.0F);
                         for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
                             PlayerData data = this.participants.get(PlayerRef.of(player));
                             if (data != null) {

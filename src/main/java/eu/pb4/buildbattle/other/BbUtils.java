@@ -20,11 +20,11 @@ import net.minecraft.util.hit.BlockHitResult;
 
 public class BbUtils {
     public static Identifier id(String path) {
-        return new Identifier(BuildBattle.ID, path);
+        return Identifier.of(BuildBattle.ID, path);
     }
 
     public static MutableText getText(String type, String path, Object... values) {
-        return Text.translatable(Util.createTranslationKey(type, new Identifier(BuildBattle.ID, path)), values);
+        return Text.translatable(Util.createTranslationKey(type, Identifier.of(BuildBattle.ID, path)), values);
     }
 
     public static boolean equalsOrInstance(Object tested, Object... objects) {
@@ -45,7 +45,7 @@ public class BbUtils {
 
 
     public static void setCreativeStack(CreativeInventoryActionC2SPacket packet, ItemStack stack) {
-        ((CreativeActionPacketAccessor) packet).bb_setStack(stack);
+        ((CreativeActionPacketAccessor) (Object) packet).bb_setStack(stack);
     }
 
     public static BlockState getStateFrom(ServerPlayerEntity player, ItemStack stack) {

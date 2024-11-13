@@ -1,16 +1,12 @@
 package eu.pb4.buildbattle.custom.items;
 
-import eu.pb4.buildbattle.custom.BBItems;
+import eu.pb4.buildbattle.custom.BBRegistry;
 import eu.pb4.polymer.core.api.item.PolymerItem;
 import eu.pb4.polymer.core.api.item.PolymerItemUtils;
-import net.minecraft.client.item.TooltipContext;
 import net.minecraft.item.*;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
+import xyz.nucleoid.packettweaker.PacketContext;
 
 public final class WrappedItem extends Item implements PolymerItem {
     public WrappedItem(Settings settings) {
@@ -19,7 +15,7 @@ public final class WrappedItem extends Item implements PolymerItem {
 
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
-        var item = getPolymerItem(context.getStack(), null);
+        var item = getPolymerItem(context.getStack(), PacketContext.get());
         if (item instanceof ShovelItem) {
             Items.IRON_SHOVEL.useOnBlock(context);
         } else if (item instanceof AxeItem) {
@@ -34,32 +30,24 @@ public final class WrappedItem extends Item implements PolymerItem {
     }
 
     @Override
-    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        return itemStack.hasNbt() && itemStack.getNbt().contains("wrappedId", NbtElement.STRING_TYPE)
-                ? Registries.ITEM.get(Identifier.tryParse(itemStack.getNbt().getString("wrappedId")))
+    public Item getPolymerItem(ItemStack itemStack, PacketContext context) {
+        return itemStack.contains(BBRegistry.WRAPPED_ITEM)
+                ? itemStack.getOrDefault(BBRegistry.WRAPPED_ITEM, ItemStack.EMPTY).getItem()
                 : Items.BARRIER;
     }
 
     @Override
-    public ItemStack getPolymerItemStack(ItemStack itemStack, TooltipContext context, @Nullable ServerPlayerEntity player) {
-        if (itemStack.hasNbt() && itemStack.getNbt().contains("wrappedId", NbtElement.STRING_TYPE)) {
-            ItemStack out = new ItemStack(getPolymerItem(itemStack, player));
-            out.setCount(itemStack.getCount());
-            if (itemStack.getNbt().contains("wrappedNbt", NbtElement.COMPOUND_TYPE)) {
-                out.setNbt(itemStack.getNbt().getCompound("wrappedNbt"));
-            }
-            return PolymerItemUtils.getPolymerItemStack(out, player);
+    public ItemStack getPolymerItemStack(ItemStack itemStack, TooltipType tooltipType, PacketContext context) {
+        if (itemStack.contains(BBRegistry.WRAPPED_ITEM)) {
+            return PolymerItemUtils.getPolymerItemStack(itemStack.getOrDefault(BBRegistry.WRAPPED_ITEM, ItemStack.EMPTY), tooltipType, context);
         }
-        return PolymerItemUtils.createItemStack(itemStack, player);
+        return PolymerItemUtils.createItemStack(itemStack, tooltipType, context);
     }
-    
+
     public static ItemStack createWrapped(ItemStack stack) {
-        var out = new ItemStack(BBItems.WRAPPED);
+        var out = new ItemStack(BBRegistry.WRAPPED);
         out.setCount(stack.getCount());
-        out.getOrCreateNbt().putString("wrappedId", Registries.ITEM.getId(stack.getItem()).toString());
-        if (stack.hasNbt()) {
-            out.getOrCreateNbt().put("wrappedNbt", stack.getNbt());
-        }
+        out.set(BBRegistry.WRAPPED_ITEM, stack.copy());
         return out;
     }
 }

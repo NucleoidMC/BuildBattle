@@ -1,14 +1,7 @@
 package eu.pb4.buildbattle.other;
 
-import eu.pb4.buildbattle.game.BuildBattleConfig;
-import eu.pb4.holograms.api.elements.HologramElement;
-import eu.pb4.holograms.api.elements.SpacingHologramElement;
-import eu.pb4.holograms.api.elements.item.SpinningItemHologramElement;
-import eu.pb4.holograms.api.elements.text.StaticTextHologramElement;
-import net.minecraft.text.*;
-import xyz.nucleoid.plasmid.game.GameSpace;
 
-import java.util.ArrayList;
+import net.minecraft.text.*;
 
 public class TextHelper {
     public static MutableText getOrdinal(int number) {
@@ -24,7 +17,8 @@ public class TextHelper {
         };
     }
 
-
+    // todo
+    /*
     public static HologramElement[] getHologramLines(GameSpace game, BuildBattleConfig config) {
         ArrayList<HologramElement> out = new ArrayList<>();
         out.add(new SpinningItemHologramElement(game.getMetadata().sourceConfig().icon()));
@@ -36,5 +30,5 @@ public class TextHelper {
         }
 
         return out.toArray(new HologramElement[0]);
-    }
+    }*/
 }

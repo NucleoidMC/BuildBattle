@@ -13,7 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.map_templates.BlockBounds;
-import xyz.nucleoid.plasmid.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.GameSpace;
 
 import java.util.*;
 
@@ -102,7 +102,7 @@ public class BuildArena {
         double y = this.spawn.min().getY();
         double z = MathHelper.nextDouble(player.getRandom(), this.spawn.min().getZ(), this.spawn.max().getZ());
 
-        player.teleport(world, x, y, z, player.getYaw(), player.getPitch());
+        player.teleport(world, x, y, z, Set.of(), player.getYaw(), player.getPitch(), true);
     }
 
     public boolean isBuilder(PlayerEntity player) {

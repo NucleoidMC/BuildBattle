@@ -1,7 +1,7 @@
 package eu.pb4.buildbattle.game.stages;
 
 import com.mojang.datafixers.util.Pair;
-import eu.pb4.buildbattle.custom.BBItems;
+import eu.pb4.buildbattle.custom.BBRegistry;
 import eu.pb4.buildbattle.custom.items.VotingItem;
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import eu.pb4.buildbattle.game.PlayerData;
@@ -11,6 +11,7 @@ import eu.pb4.buildbattle.game.map.GameplayMap;
 import eu.pb4.buildbattle.other.FormattingUtil;
 import eu.pb4.buildbattle.other.TextHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import net.minecraft.component.type.FireworkExplosionComponent;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.boss.BossBar;
 import net.minecraft.entity.damage.DamageSource;
@@ -29,14 +30,16 @@ import net.minecraft.text.Text;
 import net.minecraft.util.*;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
-import xyz.nucleoid.plasmid.game.GameCloseReason;
-import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
-import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
-import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
-import xyz.nucleoid.plasmid.game.rule.GameRuleType;
-import xyz.nucleoid.plasmid.util.ItemStackBuilder;
-import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.plasmid.api.game.GameCloseReason;
+import xyz.nucleoid.plasmid.api.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.api.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.api.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.api.game.player.JoinIntent;
+import xyz.nucleoid.plasmid.api.game.rule.GameRuleType;
+import xyz.nucleoid.plasmid.api.util.ItemStackBuilder;
+import xyz.nucleoid.plasmid.api.util.PlayerRef;
+import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.entity.EntitySpawnEvent;
 import xyz.nucleoid.stimuli.event.item.ItemUseEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
@@ -81,28 +84,29 @@ public class VotingStage {
             GlobalWidgets widgets = GlobalWidgets.addTo(game);
             VotingStage active = new VotingStage(gameSpace, world, map, widgets, config, theme, participants);
 
-            game.setRule(GameRuleType.CRAFTING, ActionResult.FAIL);
-            game.setRule(GameRuleType.PORTALS, ActionResult.FAIL);
-            game.setRule(GameRuleType.PVP, ActionResult.FAIL);
-            game.setRule(GameRuleType.HUNGER, ActionResult.FAIL);
-            game.setRule(GameRuleType.FALL_DAMAGE, ActionResult.FAIL);
-            game.setRule(GameRuleType.INTERACTION, ActionResult.PASS);
-            game.setRule(GameRuleType.BLOCK_DROPS, ActionResult.FAIL);
-            game.setRule(GameRuleType.THROW_ITEMS, ActionResult.FAIL);
-            game.setRule(GameRuleType.FALL_DAMAGE, ActionResult.FAIL);
-            game.setRule(GameRuleType.BREAK_BLOCKS, ActionResult.FAIL);
-            game.setRule(GameRuleType.PLACE_BLOCKS, ActionResult.FAIL);
-            game.setRule(GameRuleType.MODIFY_INVENTORY, ActionResult.FAIL);
+            game.setRule(GameRuleType.CRAFTING, EventResult.DENY);
+            game.setRule(GameRuleType.PORTALS, EventResult.DENY);
+            game.setRule(GameRuleType.PVP, EventResult.DENY);
+            game.setRule(GameRuleType.HUNGER, EventResult.DENY);
+            game.setRule(GameRuleType.FALL_DAMAGE, EventResult.DENY);
+            game.setRule(GameRuleType.INTERACTION, EventResult.PASS);
+            game.setRule(GameRuleType.BLOCK_DROPS, EventResult.DENY);
+            game.setRule(GameRuleType.THROW_ITEMS, EventResult.DENY);
+            game.setRule(GameRuleType.FALL_DAMAGE, EventResult.DENY);
+            game.setRule(GameRuleType.BREAK_BLOCKS, EventResult.DENY);
+            game.setRule(GameRuleType.PLACE_BLOCKS, EventResult.DENY);
+            game.setRule(GameRuleType.MODIFY_INVENTORY, EventResult.DENY);
 
             game.listen(GameActivityEvents.ENABLE, active::onOpen);
 
-            game.listen(GamePlayerEvents.OFFER, offer -> offer.accept(world, Vec3d.ZERO));
+            game.listen(GamePlayerEvents.OFFER, offer -> offer.intent() == JoinIntent.SPECTATE ? offer.accept() : offer.pass());
+            game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, Vec3d.ZERO));
             game.listen(GamePlayerEvents.ADD, active::addPlayer);
             game.listen(GamePlayerEvents.REMOVE, active::removePlayer);
             game.listen(ItemUseEvent.EVENT, active::onItemUse);
             game.listen(GameActivityEvents.TICK, active::tick);
-            game.listen(ExplosionDetonatedEvent.EVENT, (e, b) -> e.clearAffectedBlocks());
-            game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof MobEntity ? ActionResult.FAIL : ActionResult.PASS);
+            game.listen(ExplosionDetonatedEvent.EVENT, (e, b) -> EventResult.DENY);
+            game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof MobEntity ? EventResult.DENY : EventResult.PASS);
             game.listen(PlayerS2CPacketEvent.EVENT, active::onServerPacket);
 
             game.listen(PlayerDamageEvent.EVENT, active::onPlayerDamage);
@@ -111,29 +115,29 @@ public class VotingStage {
 
     private volatile boolean skipPacket = false;
 
-    protected ActionResult onServerPacket(ServerPlayerEntity player, Packet<?> packet) {
+    protected EventResult onServerPacket(ServerPlayerEntity player, Packet<?> packet) {
         if (skipPacket) {
-            return ActionResult.PASS;
+            return EventResult.PASS;
         }
 
         var x = transformPacket(player, packet);
 
         if (x == null) {
-            return ActionResult.FAIL;
+            return EventResult.DENY;
         } else if (x == packet) {
-            return ActionResult.PASS;
+            return EventResult.PASS;
         } else {
             skipPacket = true;
             player.networkHandler.sendPacket(x);
             skipPacket = false;
-            return ActionResult.FAIL;
+            return EventResult.DENY;
         }
     }
 
 
     protected Packet<ClientPlayPacketListener> transformPacket(ServerPlayerEntity player, Packet<?> packet) {
         if (packet instanceof BundleS2CPacket bundleS2CPacket) {
-            var list = new ArrayList<Packet<ClientPlayPacketListener>>();
+            var list = new ArrayList<Packet<? super ClientPlayPacketListener>>();
 
             boolean needChanging = false;
 
@@ -158,20 +162,20 @@ public class VotingStage {
             }
 
             if (list.size() > 0) {
-                return new EntityEquipmentUpdateS2CPacket(equipmentUpdate.getId(), list);
+                return new EntityEquipmentUpdateS2CPacket(equipmentUpdate.getEntityId(), list);
             }
         }
 
         return (Packet<ClientPlayPacketListener>) packet;
     }
 
-    private TypedActionResult<ItemStack> onItemUse(ServerPlayerEntity player, Hand hand) {
+    private ActionResult onItemUse(ServerPlayerEntity player, Hand hand) {
         PlayerData playerData = this.participants.get(PlayerRef.of(player));
         if (playerData != null && this.allowVoting) {
             if (this.votedArea.players.contains(playerData)) {
                 player.sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Text.translatable("text.buildbattle.vote_own").formatted(Formatting.RED)), false);
 
-                return TypedActionResult.fail(player.getStackInHand(hand));
+                return ActionResult.FAIL;
             }
 
             ItemStack itemStack = player.getStackInHand(hand);
@@ -179,9 +183,9 @@ public class VotingStage {
                 playerData.currentVote = ((VotingItem) itemStack.getItem()).score;
                 player.sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Text.translatable("text.buildbattle.vote", itemStack.getName()).formatted(Formatting.WHITE)), false);
             }
-            return TypedActionResult.success(player.getStackInHand(hand), true);
+            return ActionResult.SUCCESS_SERVER;
         }
-        return TypedActionResult.pass(player.getStackInHand(hand));
+        return ActionResult.PASS;
     }
 
 
@@ -202,8 +206,8 @@ public class VotingStage {
 
     }
 
-    private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
-        return ActionResult.FAIL;
+    private EventResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
+        return EventResult.DENY;
     }
 
 
@@ -213,13 +217,13 @@ public class VotingStage {
 
         var inv = player.getInventory();
 
-        inv.setStack(1, BBItems.VOTE_TERRIBLE.getDefaultStack());
-        inv.setStack(2, BBItems.VOTE_BAD.getDefaultStack());
-        inv.setStack(3, BBItems.VOTE_NOT_BAD.getDefaultStack());
-        inv.setStack(4, BBItems.VOTE_OKAY.getDefaultStack());
-        inv.setStack(5, BBItems.VOTE_GOOD.getDefaultStack());
-        inv.setStack(6, BBItems.VOTE_GREAT.getDefaultStack());
-        inv.setStack(7, BBItems.VOTE_WOW.getDefaultStack());
+        inv.setStack(1, BBRegistry.VOTE_TERRIBLE.getDefaultStack());
+        inv.setStack(2, BBRegistry.VOTE_BAD.getDefaultStack());
+        inv.setStack(3, BBRegistry.VOTE_NOT_BAD.getDefaultStack());
+        inv.setStack(4, BBRegistry.VOTE_OKAY.getDefaultStack());
+        inv.setStack(5, BBRegistry.VOTE_GOOD.getDefaultStack());
+        inv.setStack(6, BBRegistry.VOTE_GREAT.getDefaultStack());
+        inv.setStack(7, BBRegistry.VOTE_WOW.getDefaultStack());
         inv.selectedSlot = 4;
         player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(inv.selectedSlot));
 
@@ -306,7 +310,7 @@ public class VotingStage {
 
                 if (time % 20 == 0) {
                     for (PlayerData playerData : this.votedArea.players) {
-                        ItemStack itemStack = ItemStackBuilder.firework(DyeColor.values()[(int) (Math.random() * DyeColor.values().length - 1)].getFireworkColor(), 1, FireworkRocketItem.Type.LARGE_BALL).build();
+                        ItemStack itemStack = ItemStackBuilder.firework(DyeColor.values()[(int) (Math.random() * DyeColor.values().length - 1)].getFireworkColor(), 1, FireworkExplosionComponent.Type.LARGE_BALL).build();
                         ServerPlayerEntity player = playerData.playerRef.getEntity(world);
                         if (player != null) {
                             FireworkRocketEntity entity = new FireworkRocketEntity(world, player.getX(), player.getY() + 2, player.getZ(), itemStack);

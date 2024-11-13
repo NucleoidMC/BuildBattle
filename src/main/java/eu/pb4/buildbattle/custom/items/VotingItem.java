@@ -7,6 +7,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
+import xyz.nucleoid.packettweaker.PacketContext;
 
 public class VotingItem extends Item implements PolymerItem {
     private final Item proxy;
@@ -22,12 +25,13 @@ public class VotingItem extends Item implements PolymerItem {
     }
 
     @Override
-    public Item getPolymerItem(ItemStack stack, ServerPlayerEntity player) {
+    public Item getPolymerItem(ItemStack stack, PacketContext context) {
         return this.proxy;
     }
 
-    public Text getName() {
-        return ((MutableText) super.getName()).formatted(this.formatting);
+    @Override
+    public @Nullable Identifier getPolymerItemModel(ItemStack stack, PacketContext context) {
+        return null;
     }
 
     public Text getName(ItemStack stack) {

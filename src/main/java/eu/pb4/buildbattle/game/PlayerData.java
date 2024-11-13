@@ -1,16 +1,16 @@
 package eu.pb4.buildbattle.game;
 
-import eu.pb4.buildbattle.custom.BBItems;
+import eu.pb4.buildbattle.custom.BBRegistry;
 import eu.pb4.buildbattle.game.map.BuildArena;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
-import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 public class PlayerData {
     public final BuildArena arena;
     public final PlayerRef playerRef;
 
-    public int currentVote = BBItems.VOTE_OKAY.score;
+    public int currentVote = BBRegistry.VOTE_OKAY.score;
 
     @Nullable
     public BlockPos selectionStart;
@@ -37,7 +37,7 @@ public class PlayerData {
 
     public int getAndClearCurrentVote() {
         int vote = this.currentVote;
-        this.currentVote = BBItems.VOTE_OKAY.score;
+        this.currentVote = BBRegistry.VOTE_OKAY.score;
         return vote;
     }
 }

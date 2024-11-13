@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import xyz.nucleoid.plasmid.game.manager.GameSpaceManager;
-import xyz.nucleoid.plasmid.game.manager.ManagedGameSpace;
+import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 import xyz.nucleoid.stimuli.Stimuli;
+import xyz.nucleoid.stimuli.event.EventResult;
 
 @Mixin(BucketItem.class)
 public class BucketItemMixin {
@@ -23,8 +23,8 @@ public class BucketItemMixin {
         if (!(player instanceof ServerPlayerEntity)) {
             return;
         }
-        ManagedGameSpace gameSpace = GameSpaceManager.get().byWorld(world);
-        if (gameSpace != null && gameSpace.getBehavior().testRule(BuildBattle.CREATIVE_LIMIT) != ActionResult.PASS) {
+        var gameSpace = GameSpaceManager.get().byWorld(world);
+        if (gameSpace != null && gameSpace.getBehavior().testRule(BuildBattle.CREATIVE_LIMIT) != EventResult.PASS) {
             try (var invokers = Stimuli.select().forEntityAt(player, pos)) {
                 var result = invokers.get(BuildBattle.ON_BUCKET_USAGE).onUse((ServerPlayerEntity) player, pos);
 
