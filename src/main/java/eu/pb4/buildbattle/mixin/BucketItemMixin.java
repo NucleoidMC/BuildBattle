@@ -1,6 +1,7 @@
 package eu.pb4.buildbattle.mixin;
 
 import eu.pb4.buildbattle.BuildBattle;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BucketItem;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -19,14 +20,14 @@ import xyz.nucleoid.stimuli.event.EventResult;
 @Mixin(BucketItem.class)
 public class BucketItemMixin {
     @Inject(method = "placeFluid", at = @At("HEAD"), cancellable = true)
-    private void disallowPlacingFluids(PlayerEntity player, World world, BlockPos pos, BlockHitResult blockHitResult, CallbackInfoReturnable<Boolean> cir) {
-        if (!(player instanceof ServerPlayerEntity)) {
+    private void disallowPlacingFluids(LivingEntity user, World world, BlockPos pos, BlockHitResult hitResult, CallbackInfoReturnable<Boolean> cir) {
+        if (!(user instanceof ServerPlayerEntity player)) {
             return;
         }
         var gameSpace = GameSpaceManager.get().byWorld(world);
         if (gameSpace != null && gameSpace.getBehavior().testRule(BuildBattle.CREATIVE_LIMIT) != EventResult.PASS) {
-            try (var invokers = Stimuli.select().forEntityAt(player, pos)) {
-                var result = invokers.get(BuildBattle.ON_BUCKET_USAGE).onUse((ServerPlayerEntity) player, pos);
+            try (var invokers = Stimuli.select().forEntityAt(user, pos)) {
+                var result = invokers.get(BuildBattle.ON_BUCKET_USAGE).onUse(player, pos);
 
                 if (result == ActionResult.FAIL) {
                     cir.setReturnValue(false);

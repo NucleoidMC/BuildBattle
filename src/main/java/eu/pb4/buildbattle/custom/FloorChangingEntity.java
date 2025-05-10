@@ -38,7 +38,7 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
         this.setSilent(true);
         this.setNoGravity(true);
         this.setCustomName(Text.translatable("text.buildbattle.floor_change").formatted(Formatting.GOLD));
-        this.villagerData = new VillagerData(Registries.VILLAGER_TYPE.getRandom(this.getRandom()).get().value(), Registries.VILLAGER_PROFESSION.getRandom(this.getRandom()).get().value(), 3);
+        this.villagerData = new VillagerData(Registries.VILLAGER_TYPE.getRandom(this.getRandom()).get(), Registries.VILLAGER_PROFESSION.getRandom(this.getRandom()).get(), 3);
     }
 
     public FloorChangingEntity(World world) {
@@ -52,7 +52,7 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
 
     @Override
     public void tickMovement() {
-        this.turnHead(this.getYaw(), this.getYaw());
+        this.turnHead(this.getYaw());
     }
 
     @Override
@@ -63,11 +63,6 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
     @Override
     public boolean canTakeDamage() {
         return false;
-    }
-
-    @Override
-    public Iterable<ItemStack> getArmorItems() {
-        return List.of();
     }
 
     @Override

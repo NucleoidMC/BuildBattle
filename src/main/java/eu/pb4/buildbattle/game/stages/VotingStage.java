@@ -224,8 +224,8 @@ public class VotingStage {
         inv.setStack(5, BBRegistry.VOTE_GOOD.getDefaultStack());
         inv.setStack(6, BBRegistry.VOTE_GREAT.getDefaultStack());
         inv.setStack(7, BBRegistry.VOTE_WOW.getDefaultStack());
-        inv.selectedSlot = 4;
-        player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(inv.selectedSlot));
+        inv.setSelectedSlot(4);
+        player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(inv.getSelectedSlot()));
 
         player.getAbilities().allowFlying = true;
         player.networkHandler.sendPacket(new PlayerAbilitiesS2CPacket(player.getAbilities()));

@@ -1,6 +1,7 @@
 package eu.pb4.buildbattle.mixin;
 
 import eu.pb4.buildbattle.BuildBattle;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.EntityBucketItem;
 import net.minecraft.item.ItemStack;
@@ -18,7 +19,7 @@ import xyz.nucleoid.stimuli.event.EventResult;
 public class EntityBucketItemMixin {
 
     @Inject(method = "onEmptied", at = @At("HEAD"), cancellable = true)
-    private void onEmptied(PlayerEntity player, World world, ItemStack stack, BlockPos pos, CallbackInfo ci) {
+    private void onEmptied(LivingEntity user, World world, ItemStack stack, BlockPos pos, CallbackInfo ci) {
         var gameSpace = GameSpaceManager.get().byWorld(world);
         if (gameSpace != null && gameSpace.getBehavior().testRule(BuildBattle.CREATIVE_LIMIT) != EventResult.PASS) {
             ci.cancel();
