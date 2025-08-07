@@ -2,6 +2,10 @@ package eu.pb4.buildbattle.game.stages;
 
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import eu.pb4.buildbattle.game.map.WaitingMap;
+import eu.pb4.buildbattle.other.TextHelper;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
@@ -37,11 +41,15 @@ public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfi
             game.listen(GameActivityEvents.REQUEST_START, waiting::requestStart);
             game.listen(GamePlayerEvents.ADD, waiting::addPlayer);
             game.listen(PlayerDeathEvent.EVENT, waiting::onPlayerDeath);
-            game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, Vec3d.ZERO));
+            game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, waitingMap.getSpawnLocation()));
             game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof MobEntity ? EventResult.DENY : EventResult.PASS);
 
-            // Todo
-            //Holograms.create(world, waitingMap.hologramPos, TextHelper.getHologramLines(game.getGameSpace(), config)).show();
+            var display = EntityType.TEXT_DISPLAY.create(world, SpawnReason.STRUCTURE);
+            assert display != null;
+            display.setPosition(waitingMap.hologramPos.subtract(0, 1, 0));
+            display.setBillboardMode(DisplayEntity.BillboardMode.VERTICAL);
+            display.setText(TextHelper.getHologramLines(game.getGameSpace(), config));
+            world.spawnEntity(display);
         });
     }
 

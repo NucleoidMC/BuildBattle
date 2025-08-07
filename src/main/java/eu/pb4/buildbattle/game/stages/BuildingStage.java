@@ -178,7 +178,7 @@ public class BuildingStage {
             });
 
             game.listen(GamePlayerEvents.OFFER, offer -> offer.intent() == JoinIntent.SPECTATE ? offer.accept() : offer.pass());
-            game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, Vec3d.ZERO));
+            game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, map.buildArena.getFirst().spawn.center()));
             game.listen(GamePlayerEvents.ADD, active::addPlayer);
             game.listen(GamePlayerEvents.REMOVE, active::removePlayer);
             game.listen(BlockPlaceEvent.BEFORE, active::onPlaceBlock);
@@ -220,7 +220,7 @@ public class BuildingStage {
             var arena = this.gameMap.getArena(entity.getBlockPos());
 
             if (arena != null) {
-                if (entity.getEntityWorld().getOtherEntities(null, arena.bounds.asBox(), (e) -> !(e instanceof PlayerEntity)).size() > 32) {
+                if (entity.getWorld().getOtherEntities(null, arena.bounds.asBox(), (e) -> !(e instanceof PlayerEntity)).size() > 32) {
                     return EventResult.DENY;
                 }
             }
@@ -370,7 +370,7 @@ public class BuildingStage {
     }
 
     private void onPlayerSwing(ServerPlayerEntity player, Hand hand) {
-        if (Thread.currentThread() != player.server.getThread()) {
+        if (!player.getServer().isOnThread()) {
             return;
         }
 
@@ -413,12 +413,7 @@ public class BuildingStage {
     private void onOpen() {
         for (PlayerRef ref : this.participants.keySet()) {
             if (this.gameSpace.getPlayers().contains(ref)) {
-                ref.ifOnline(world, (p) -> {
-                    this.spawnParticipant(p);
-                    if (this.themeVotingManager != null) {
-                        this.themeVotingManager.addPlayer(p);
-                    }
-                });
+                ref.ifOnline(world, this::spawnParticipant);
 
             }
         }
@@ -467,6 +462,16 @@ public class BuildingStage {
 
                     this.switchToBuilding();
                     this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.5f);
+                } else {
+                    for (PlayerRef ref : this.participants.keySet()) {
+                        if (this.gameSpace.getPlayers().contains(ref)) {
+                            ref.ifOnline(world, (p) -> {
+                                if (p.isLoaded()) {
+                                    this.themeVotingManager.addPlayer(p);
+                                }
+                            });
+                        }
+                    }
                 }
 
                 this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.voting_theme"), ((float) (this.themeVotingTime - time)) / this.themeVotingTime);

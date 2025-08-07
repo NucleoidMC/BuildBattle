@@ -13,8 +13,10 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Arm;
@@ -111,7 +113,8 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
             BlockState state = BbUtils.getStateFrom((ServerPlayerEntity) player, player.getStackInHand(hand));
             if (state != null) {
                 this.lastUsedFloor = player.getStackInHand(hand);
-                this.equipStack(EquipmentSlot.MAINHAND, this.lastUsedFloor);
+                ((ServerWorld)this.getWorld()).getChunkManager().sendToOtherNearbyPlayers(this, new EntityEquipmentUpdateS2CPacket(this.getId(),
+                        List.of(new Pair<>(EquipmentSlot.MAINHAND, this.lastUsedFloor))));
                 for (BlockPos blockPos : buildArena.ground) {
                     this.getWorld().setBlockState(blockPos, state);
                 }

@@ -100,7 +100,7 @@ public class VotingStage {
             game.listen(GameActivityEvents.ENABLE, active::onOpen);
 
             game.listen(GamePlayerEvents.OFFER, offer -> offer.intent() == JoinIntent.SPECTATE ? offer.accept() : offer.pass());
-            game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, Vec3d.ZERO));
+            game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, active.votedArea != null ? active.votedArea.spawn.center() : map.buildArena.getFirst().spawn.center()));
             game.listen(GamePlayerEvents.ADD, active::addPlayer);
             game.listen(GamePlayerEvents.REMOVE, active::removePlayer);
             game.listen(ItemUseEvent.EVENT, active::onItemUse);

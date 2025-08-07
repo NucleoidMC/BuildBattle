@@ -1,7 +1,10 @@
 package eu.pb4.buildbattle.other;
 
 
+import eu.pb4.buildbattle.game.BuildBattleConfig;
 import net.minecraft.text.*;
+import xyz.nucleoid.plasmid.api.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.config.GameConfig;
 
 public class TextHelper {
     public static MutableText getOrdinal(int number) {
@@ -17,18 +20,16 @@ public class TextHelper {
         };
     }
 
-    // todo
-    /*
-    public static HologramElement[] getHologramLines(GameSpace game, BuildBattleConfig config) {
-        ArrayList<HologramElement> out = new ArrayList<>();
-        out.add(new SpinningItemHologramElement(game.getMetadata().sourceConfig().icon()));
-        out.add(new StaticTextHologramElement(Text.empty().append(game.getMetadata().sourceConfig().name()).setStyle(Style.EMPTY.withColor(0xffae36).withBold(true))));
-        out.add(new SpacingHologramElement(0.2f));
+    public static Text getHologramLines(GameSpace game, BuildBattleConfig config) {
+        var out = Text.empty();
+        out.append(Text.empty().append(GameConfig.name(game.getMetadata().sourceConfig())).setStyle(Style.EMPTY.withColor(0xffae36).withBold(true)));
+        out.append("\n\n");
         String type = config.gamemode();
         for (int x = 1; x <= 7; x++) {
-            out.add(new StaticTextHologramElement(Text.translatable("description.buildbattle." + type + "." + x, (config.timeLimitSecs() / 60))));
+            out.append(Text.translatable("description.buildbattle." + type + "." + x, (config.timeLimitSecs() / 60)));
+            out.append("\n");
         }
 
-        return out.toArray(new HologramElement[0]);
-    }*/
+        return out;
+    }
 }

@@ -36,6 +36,12 @@ public class ThemeVotingManager {
     }
 
     public void addPlayer(ServerPlayerEntity player) {
+        for (var gui : this.guis) {
+            if (gui.getPlayer() == player) {
+                return;
+            }
+        }
+
         Gui gui = new Gui(player);
         this.guis.add(gui);
         gui.open();
