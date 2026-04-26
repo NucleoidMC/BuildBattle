@@ -2,23 +2,22 @@ package eu.pb4.buildbattle.themes;
 
 import eu.pb4.sgui.api.ClickType;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
-import eu.pb4.sgui.api.elements.GuiElementInterface;
+import eu.pb4.sgui.api.elements.GuiElement;
 import eu.pb4.sgui.api.gui.SimpleGui;
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.MathHelper;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import xyz.nucleoid.plasmid.api.util.PlayerUtil;
 
 public class ThemeVotingManager {
     private final Object2IntMap<String> votes = new Object2IntArrayMap<>();
@@ -35,7 +34,7 @@ public class ThemeVotingManager {
         }
     }
 
-    public void addPlayer(ServerPlayerEntity player) {
+    public void addPlayer(ServerPlayer player) {
         for (var gui : this.guis) {
             if (gui.getPlayer() == player) {
                 return;
@@ -78,17 +77,17 @@ public class ThemeVotingManager {
     private class Gui extends SimpleGui {
         public String vote = null;
 
-        public Gui(ServerPlayerEntity player) {
-            super(ScreenHandlerType.GENERIC_9X5, player, false);
+        public Gui(ServerPlayer player) {
+            super(MenuType.GENERIC_9x5, player, false);
 
             for (String theme : ThemeVotingManager.this.possible) {
                 this.updateThemePercentage(theme, 0, 1);
             }
-            this.setTitle(Text.translatable("text.buildbattle.timer_bar.voting_theme"));
+            this.setTitle(Component.translatable("text.buildbattle.timer_bar.voting_theme"));
         }
 
         @Override
-        public boolean onClick(int index, ClickType type, SlotActionType action, GuiElementInterface element) {
+        public boolean onClick(int index, ClickType type, ContainerInput action, GuiElement element) {
             return super.onClick(index, type, action, element);
         }
 
@@ -98,10 +97,10 @@ public class ThemeVotingManager {
             int percent = Math.round(((float) votes / allVotes) * 100);
 
             GuiElementBuilder icon = new GuiElementBuilder(Items.BRICKS, Math.max(votes, 1))
-                    .setName(Text.literal(theme).formatted(Formatting.YELLOW).append(Text.literal(" - " + percent + "%"))).hideDefaultTooltip();
+                    .setName(Component.literal(theme).withStyle(ChatFormatting.YELLOW).append(Component.literal(" - " + percent + "%"))).hideDefaultTooltip();
 
-            icon.setCallback((x, y, z) -> {
-                this.player.playSoundToPlayer(SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.MASTER, 0.5f, 1);
+            icon.setCallback(() -> {
+                PlayerUtil.playSoundToPlayer(this.player, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.UI, 0.5f, 1);
 
                 if (this.vote != null) {
                     ThemeVotingManager.this.votes.put(this.vote, ThemeVotingManager.this.votes.getInt(this.vote) - 1);
@@ -138,11 +137,11 @@ public class ThemeVotingManager {
         }
 
         @Override
-        public void onClose() {
+        public void afterRemoval() {
             if (ThemeVotingManager.this.active) {
                 this.open();
             }
-            super.onClose();
+            super.afterRemoval();
         }
     }
 }

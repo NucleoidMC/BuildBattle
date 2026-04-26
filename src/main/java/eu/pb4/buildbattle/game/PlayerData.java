@@ -2,7 +2,7 @@ package eu.pb4.buildbattle.game;
 
 import eu.pb4.buildbattle.custom.BBRegistry;
 import eu.pb4.buildbattle.game.map.BuildArena;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
 

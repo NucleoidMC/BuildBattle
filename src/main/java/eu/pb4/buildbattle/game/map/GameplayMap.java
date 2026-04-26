@@ -1,17 +1,17 @@
 package eu.pb4.buildbattle.game.map;
 
 import eu.pb4.buildbattle.game.BuildBattleConfig;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.biome.BiomeKeys;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.map_templates.MapTemplate;
 import xyz.nucleoid.map_templates.MapTemplateMetadata;
 import xyz.nucleoid.map_templates.MapTemplateSerializer;
 import xyz.nucleoid.plasmid.api.game.GameOpenException;
-import xyz.nucleoid.plasmid.api.game.world.generator.TemplateChunkGenerator;
+import xyz.nucleoid.plasmid.api.game.level.generator.TemplateChunkGenerator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,11 +59,11 @@ public class GameplayMap {
                 }
             }
 
-            template.setBiome(BiomeKeys.FOREST);
+            template.setBiome(Biomes.FOREST);
 
             this.template = template;
         } catch (IOException e) {
-            throw new GameOpenException(Text.literal("Failed to load template"), e);
+            throw new GameOpenException(Component.literal("Failed to load template"), e);
         }
     }
 

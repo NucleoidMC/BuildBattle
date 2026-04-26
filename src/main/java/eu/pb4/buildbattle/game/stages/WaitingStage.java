@@ -3,18 +3,9 @@ package eu.pb4.buildbattle.game.stages;
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import eu.pb4.buildbattle.game.map.WaitingMap;
 import eu.pb4.buildbattle.other.TextHelper;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.decoration.DisplayEntity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameRules;
-import xyz.nucleoid.fantasy.RuntimeWorldConfig;
+import net.minecraft.world.level.gamerules.GameRules;
+import xyz.nucleoid.fantasy.RuntimeLevelConfig;
 import xyz.nucleoid.plasmid.api.game.*;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.GameMode;
 import xyz.nucleoid.plasmid.api.game.common.GameWaitingLobby;
 import xyz.nucleoid.plasmid.api.game.event.GameActivityEvents;
 import xyz.nucleoid.plasmid.api.game.event.GamePlayerEvents;
@@ -23,17 +14,26 @@ import xyz.nucleoid.stimuli.event.entity.EntitySpawnEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 import java.util.Set;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 
-public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfig config, ServerWorld world) {
+public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfig config, ServerLevel world) {
     public static GameOpenProcedure open(GameOpenContext<BuildBattleConfig> context) {
         BuildBattleConfig config = context.config();
         WaitingMap waitingMap = new WaitingMap(context.server(), config);
 
-        RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
+        RuntimeLevelConfig worldConfig = new RuntimeLevelConfig()
                 .setGenerator(waitingMap.asGenerator())
-                .setGameRule(GameRules.DO_WEATHER_CYCLE, false);
+                .setGameRule(GameRules.ADVANCE_WEATHER, false);
 
-        return context.openWithWorld(worldConfig, (game, world) -> {
+        return context.openWithLevel(worldConfig, (game, world) -> {
             WaitingStage waiting = new WaitingStage(game.getGameSpace(), waitingMap, config, world);
 
             GameWaitingLobby.addTo(game, config.playerConfig());
@@ -42,45 +42,45 @@ public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfi
             game.listen(GamePlayerEvents.ADD, waiting::addPlayer);
             game.listen(PlayerDeathEvent.EVENT, waiting::onPlayerDeath);
             game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, waitingMap.getSpawnLocation()));
-            game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof MobEntity ? EventResult.DENY : EventResult.PASS);
+            game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof Mob ? EventResult.DENY : EventResult.PASS);
 
-            var display = EntityType.TEXT_DISPLAY.create(world, SpawnReason.STRUCTURE);
+            var display = EntityType.TEXT_DISPLAY.create(world, EntitySpawnReason.STRUCTURE);
             assert display != null;
-            display.setPosition(waitingMap.hologramPos.subtract(0, 1, 0));
-            display.setBillboardMode(DisplayEntity.BillboardMode.VERTICAL);
+            display.setPos(waitingMap.hologramPos.subtract(0, 1, 0));
+            display.setBillboardConstraints(Display.BillboardConstraints.VERTICAL);
             display.setText(TextHelper.getHologramLines(game.getGameSpace(), config));
-            world.spawnEntity(display);
+            world.addFreshEntity(display);
         });
     }
 
     private GameResult requestStart() {
         this.gameSpace.getServer().execute(() -> {
-            BuildingStage.open(this.gameSpace, this.config, () -> gameSpace.getWorlds().remove(this.world));
+            BuildingStage.open(this.gameSpace, this.config, () -> gameSpace.getLevels().remove(this.world));
         });
         return GameResult.ok();
     }
 
-    private void addPlayer(ServerPlayerEntity player) {
+    private void addPlayer(ServerPlayer player) {
         this.spawnPlayer(player);
     }
 
-    private EventResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+    private EventResult onPlayerDeath(ServerPlayer player, DamageSource source) {
         player.setHealth(20.0f);
         this.spawnPlayer(player);
         return EventResult.DENY;
     }
 
-    private void spawnPlayer(ServerPlayerEntity player) {
-        player.changeGameMode(GameMode.ADVENTURE);
-        player.setVelocity(Vec3d.ZERO);
-        player.getInventory().clear();
+    private void spawnPlayer(ServerPlayer player) {
+        player.setGameMode(GameType.ADVENTURE);
+        player.setDeltaMovement(Vec3.ZERO);
+        player.getInventory().clearContent();
         player.fallDistance = 0.0f;
-        player.getAbilities().allowFlying = true;
-        player.sendAbilitiesUpdate();
+        player.getAbilities().mayfly = true;
+        player.onUpdateAbilities();
 
-        Vec3d vec3d = this.map.getSpawnLocation();
+        Vec3 vec3d = this.map.getSpawnLocation();
 
-        player.teleport(this.world, vec3d.x, vec3d.y, vec3d.z, Set.of(), 0f, 0f, true);
+        player.teleportTo(this.world, vec3d.x, vec3d.y, vec3d.z, Set.of(), 0f, 0f, true);
     }
 
 }

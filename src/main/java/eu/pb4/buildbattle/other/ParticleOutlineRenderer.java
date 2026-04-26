@@ -1,15 +1,15 @@
 package eu.pb4.buildbattle.other;
 
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 // Copied from https://github.com/NucleoidMC/plasmid/blob/1.16/src/main/java/xyz/nucleoid/plasmid/map/workspace/editor/ParticleOutlineRenderer.java
 public class ParticleOutlineRenderer {
-    public static void render(ServerPlayerEntity player, BlockPos min, BlockPos max, ParticleEffect effect) {
+    public static void render(ServerPlayer player, BlockPos min, BlockPos max, ParticleOptions effect) {
         Edge[] edges = edges(min, max);
 
         int maxInterval = 5;
@@ -20,7 +20,7 @@ public class ParticleOutlineRenderer {
 
             int interval = 1;
             if (length > 0) {
-                interval = MathHelper.clamp(length / Math.min(maxCount, length), 1, maxInterval);
+                interval = Mth.clamp(length / Math.min(maxCount, length), 1, maxInterval);
             }
 
             int steps = (length + interval - 1) / interval;
@@ -34,22 +34,22 @@ public class ParticleOutlineRenderer {
         }
     }
 
-    private static void spawnParticleIfVisible(ServerPlayerEntity player, ParticleEffect effect, double x, double y, double z) {
-        ServerWorld world = player.getWorld();
+    private static void spawnParticleIfVisible(ServerPlayer player, ParticleOptions effect, double x, double y, double z) {
+        ServerLevel world = player.level();
 
-        Vec3d delta = player.getPos().subtract(x, y, z);
-        double length2 = delta.lengthSquared();
+        Vec3 delta = player.position().subtract(x, y, z);
+        double length2 = delta.lengthSqr();
         if (length2 > 256 * 256) {
             return;
         }
 
-        Vec3d rotation = player.getRotationVec(1.0F);
-        double dot = (delta.multiply(1.0 / Math.sqrt(length2))).dotProduct(rotation);
+        Vec3 rotation = player.getViewVector(1.0F);
+        double dot = (delta.scale(1.0 / Math.sqrt(length2))).dot(rotation);
         if (dot > 0.0) {
             return;
         }
 
-        world.spawnParticles(
+        world.sendParticles(
                 player, effect, true, true,
                 x, y, z,
                 1,
@@ -105,7 +105,7 @@ public class ParticleOutlineRenderer {
             int dx = this.endX - this.startX;
             int dy = this.endY - this.startY;
             int dz = this.endZ - this.startZ;
-            return MathHelper.ceil(Math.sqrt(dx * dx + dy * dy + dz * dz));
+            return Mth.ceil(Math.sqrt(dx * dx + dy * dy + dz * dz));
         }
     }
 }

@@ -11,25 +11,30 @@ import eu.pb4.buildbattle.game.map.GameplayMap;
 import eu.pb4.buildbattle.other.FormattingUtil;
 import eu.pb4.buildbattle.other.TextHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import net.minecraft.component.type.FireworkExplosionComponent;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.boss.BossBar;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.projectile.FireworkRocketEntity;
-import net.minecraft.item.FireworkRocketItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.*;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBundlePacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
+import net.minecraft.network.protocol.game.ClientboundSetHeldSlotPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.*;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameMode;
+import net.minecraft.world.BossEvent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.projectile.FireworkRocketEntity;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.FireworkExplosion;
+import net.minecraft.world.level.GameType;
 import xyz.nucleoid.plasmid.api.game.GameCloseReason;
 import xyz.nucleoid.plasmid.api.game.GameSpace;
 import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
@@ -52,7 +57,7 @@ import java.util.stream.Collectors;
 public class VotingStage {
     public final GameSpace gameSpace;
     public final GameplayMap gameMap;
-    public final ServerWorld world;
+    public final ServerLevel world;
     public final Object2ObjectMap<PlayerRef, PlayerData> participants;
     public final String theme;
     private final BuildBattleConfig config;
@@ -66,7 +71,7 @@ public class VotingStage {
     private Phase phase = Phase.VOTING;
     private boolean allowVoting = false;
 
-    private VotingStage(GameSpace gameSpace, ServerWorld world, GameplayMap map, GlobalWidgets widgets, BuildBattleConfig config, String theme, Object2ObjectMap<PlayerRef, PlayerData> participants) {
+    private VotingStage(GameSpace gameSpace, ServerLevel world, GameplayMap map, GlobalWidgets widgets, BuildBattleConfig config, String theme, Object2ObjectMap<PlayerRef, PlayerData> participants) {
         this.gameSpace = gameSpace;
         this.config = config;
         this.gameMap = map;
@@ -75,11 +80,11 @@ public class VotingStage {
         this.theme = theme;
 
         this.timerBar = new TimerBar(widgets);
-        this.timerBar.setColor(BossBar.Color.YELLOW);
+        this.timerBar.setColor(BossEvent.BossBarColor.YELLOW);
         this.votingArenaIterator = map.buildArena.iterator();
     }
 
-    public static void open(GameSpace gameSpace, GameplayMap map, ServerWorld world, String theme, Object2ObjectMap<PlayerRef, PlayerData> participants, BuildBattleConfig config) {
+    public static void open(GameSpace gameSpace, GameplayMap map, ServerLevel world, String theme, Object2ObjectMap<PlayerRef, PlayerData> participants, BuildBattleConfig config) {
         gameSpace.setActivity(game -> {
             GlobalWidgets widgets = GlobalWidgets.addTo(game);
             VotingStage active = new VotingStage(gameSpace, world, map, widgets, config, theme, participants);
@@ -106,7 +111,7 @@ public class VotingStage {
             game.listen(ItemUseEvent.EVENT, active::onItemUse);
             game.listen(GameActivityEvents.TICK, active::tick);
             game.listen(ExplosionDetonatedEvent.EVENT, (e, b) -> EventResult.DENY);
-            game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof MobEntity ? EventResult.DENY : EventResult.PASS);
+            game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof Mob ? EventResult.DENY : EventResult.PASS);
             game.listen(PlayerS2CPacketEvent.EVENT, active::onServerPacket);
 
             game.listen(PlayerDamageEvent.EVENT, active::onPlayerDamage);
@@ -115,7 +120,7 @@ public class VotingStage {
 
     private volatile boolean skipPacket = false;
 
-    protected EventResult onServerPacket(ServerPlayerEntity player, Packet<?> packet) {
+    protected EventResult onServerPacket(ServerPlayer player, Packet<?> packet) {
         if (skipPacket) {
             return EventResult.PASS;
         }
@@ -128,20 +133,20 @@ public class VotingStage {
             return EventResult.PASS;
         } else {
             skipPacket = true;
-            player.networkHandler.sendPacket(x);
+            player.connection.send(x);
             skipPacket = false;
             return EventResult.DENY;
         }
     }
 
 
-    protected Packet<ClientPlayPacketListener> transformPacket(ServerPlayerEntity player, Packet<?> packet) {
-        if (packet instanceof BundleS2CPacket bundleS2CPacket) {
-            var list = new ArrayList<Packet<? super ClientPlayPacketListener>>();
+    protected Packet<ClientGamePacketListener> transformPacket(ServerPlayer player, Packet<?> packet) {
+        if (packet instanceof ClientboundBundlePacket bundleS2CPacket) {
+            var list = new ArrayList<Packet<? super ClientGamePacketListener>>();
 
             boolean needChanging = false;
 
-            for (var x : bundleS2CPacket.getPackets()) {
+            for (var x : bundleS2CPacket.subPackets()) {
                 var y = transformPacket(player, x);
 
                 if (y != null) {
@@ -153,39 +158,39 @@ public class VotingStage {
                 }
             }
 
-            return needChanging ? new BundleS2CPacket(list) : bundleS2CPacket;
-        } else if (packet instanceof EntityEquipmentUpdateS2CPacket equipmentUpdate) {
+            return needChanging ? new ClientboundBundlePacket(list) : bundleS2CPacket;
+        } else if (packet instanceof ClientboundSetEquipmentPacket equipmentUpdate) {
             var list = new ArrayList<Pair<EquipmentSlot, ItemStack>>();
 
-            for (var pair : equipmentUpdate.getEquipmentList()) {
+            for (var pair : equipmentUpdate.getSlots()) {
                 list.add(new Pair<>(pair.getFirst(), ItemStack.EMPTY));
             }
 
             if (list.size() > 0) {
-                return new EntityEquipmentUpdateS2CPacket(equipmentUpdate.getEntityId(), list);
+                return new ClientboundSetEquipmentPacket(equipmentUpdate.getEntity(), list);
             }
         }
 
-        return (Packet<ClientPlayPacketListener>) packet;
+        return (Packet<ClientGamePacketListener>) packet;
     }
 
-    private ActionResult onItemUse(ServerPlayerEntity player, Hand hand) {
+    private InteractionResult onItemUse(ServerPlayer player, InteractionHand hand) {
         PlayerData playerData = this.participants.get(PlayerRef.of(player));
         if (playerData != null && this.allowVoting) {
             if (this.votedArea.players.contains(playerData)) {
-                player.sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Text.translatable("text.buildbattle.vote_own").formatted(Formatting.RED)), false);
+                player.sendSystemMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Component.translatable("text.buildbattle.vote_own").withStyle(ChatFormatting.RED)), false);
 
-                return ActionResult.FAIL;
+                return InteractionResult.FAIL;
             }
 
-            ItemStack itemStack = player.getStackInHand(hand);
+            ItemStack itemStack = player.getItemInHand(hand);
             if (itemStack.getItem() instanceof VotingItem) {
                 playerData.currentVote = ((VotingItem) itemStack.getItem()).score;
-                player.sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Text.translatable("text.buildbattle.vote", itemStack.getName()).formatted(Formatting.WHITE)), false);
+                player.sendSystemMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Component.translatable("text.buildbattle.vote", itemStack.getHoverName()).withStyle(ChatFormatting.WHITE)), false);
             }
-            return ActionResult.SUCCESS_SERVER;
+            return InteractionResult.SUCCESS_SERVER;
         }
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
 
@@ -194,7 +199,7 @@ public class VotingStage {
 
     }
 
-    private void addPlayer(ServerPlayerEntity player) {
+    private void addPlayer(ServerPlayer player) {
         if (this.participants.containsKey(PlayerRef.of(player))) {
             this.spawnParticipant(player);
         } else {
@@ -202,41 +207,41 @@ public class VotingStage {
         }
     }
 
-    private void removePlayer(ServerPlayerEntity player) {
+    private void removePlayer(ServerPlayer player) {
 
     }
 
-    private EventResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
+    private EventResult onPlayerDamage(ServerPlayer player, DamageSource source, float amount) {
         return EventResult.DENY;
     }
 
 
-    private void spawnParticipant(ServerPlayerEntity player) {
-        player.getInventory().clear();
-        player.changeGameMode(GameMode.ADVENTURE);
+    private void spawnParticipant(ServerPlayer player) {
+        player.getInventory().clearContent();
+        player.setGameMode(GameType.ADVENTURE);
 
         var inv = player.getInventory();
 
-        inv.setStack(1, BBRegistry.VOTE_TERRIBLE.getDefaultStack());
-        inv.setStack(2, BBRegistry.VOTE_BAD.getDefaultStack());
-        inv.setStack(3, BBRegistry.VOTE_NOT_BAD.getDefaultStack());
-        inv.setStack(4, BBRegistry.VOTE_OKAY.getDefaultStack());
-        inv.setStack(5, BBRegistry.VOTE_GOOD.getDefaultStack());
-        inv.setStack(6, BBRegistry.VOTE_GREAT.getDefaultStack());
-        inv.setStack(7, BBRegistry.VOTE_WOW.getDefaultStack());
+        inv.setItem(1, BBRegistry.VOTE_TERRIBLE.getDefaultInstance());
+        inv.setItem(2, BBRegistry.VOTE_BAD.getDefaultInstance());
+        inv.setItem(3, BBRegistry.VOTE_NOT_BAD.getDefaultInstance());
+        inv.setItem(4, BBRegistry.VOTE_OKAY.getDefaultInstance());
+        inv.setItem(5, BBRegistry.VOTE_GOOD.getDefaultInstance());
+        inv.setItem(6, BBRegistry.VOTE_GREAT.getDefaultInstance());
+        inv.setItem(7, BBRegistry.VOTE_WOW.getDefaultInstance());
         inv.setSelectedSlot(4);
-        player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(inv.getSelectedSlot()));
+        player.connection.send(new ClientboundSetHeldSlotPacket(inv.getSelectedSlot()));
 
-        player.getAbilities().allowFlying = true;
-        player.networkHandler.sendPacket(new PlayerAbilitiesS2CPacket(player.getAbilities()));
+        player.getAbilities().mayfly = true;
+        player.connection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
 
         if (this.votedArea != null) {
             this.votedArea.teleportPlayer(player, this.world);
         }
     }
 
-    private void spawnSpectator(ServerPlayerEntity player) {
-        player.changeGameMode(GameMode.SPECTATOR);
+    private void spawnSpectator(ServerPlayer player) {
+        player.setGameMode(GameType.SPECTATOR);
         if (this.votedArea != null) {
             this.votedArea.teleportPlayer(player, this.world);
         }
@@ -253,18 +258,18 @@ public class VotingStage {
                     this.allowVoting = false;
                     this.countScore();
                     this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.PICKAXE_PREFIX,
-                            Text.translatable("text.buildbattle.build_by",
+                            Component.translatable("text.buildbattle.build_by",
                                     this.votedArea.getBuildersText(this.gameSpace)
-                            ).formatted(Formatting.AQUA)));
+                            ).withStyle(ChatFormatting.AQUA)));
                     this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.STAR_PREFIX,
-                            Text.translatable("text.buildbattle.build_score",
-                                    Text.literal("" + this.votedArea.score).formatted(Formatting.GOLD)
-                            ).formatted(Formatting.LIGHT_PURPLE)));
+                            Component.translatable("text.buildbattle.build_score",
+                                    Component.literal("" + this.votedArea.score).withStyle(ChatFormatting.GOLD)
+                            ).withStyle(ChatFormatting.LIGHT_PURPLE)));
 
-                    this.timerBar.update(Text.translatable(this.votingArenaIterator.hasNext() ? "text.buildbattle.timer_bar.next_arena" : "text.buildbattle.timer_bar.finishing_game"), 0);
+                    this.timerBar.update(Component.translatable(this.votingArenaIterator.hasNext() ? "text.buildbattle.timer_bar.next_arena" : "text.buildbattle.timer_bar.finishing_game"), 0);
 
-                    for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
-                        player.getInventory().clear();
+                    for (ServerPlayer player : this.gameSpace.getPlayers()) {
+                        player.getInventory().clearContent();
                     }
                     break;
                 }
@@ -276,10 +281,10 @@ public class VotingStage {
                 int minutes = secondsUntilEnd / 60;
                 int seconds = secondsUntilEnd % 60;
 
-                this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.time_left", String.format("%02d:%02d", minutes, seconds))
-                                .append(Text.literal(" - ").formatted(Formatting.GRAY))
-                                .append(Text.translatable("text.buildbattle.timer_bar.theme").formatted(Formatting.YELLOW))
-                                .append(Text.literal(theme)),
+                this.timerBar.update(Component.translatable("text.buildbattle.timer_bar.time_left", String.format("%02d:%02d", minutes, seconds))
+                                .append(Component.literal(" - ").withStyle(ChatFormatting.GRAY))
+                                .append(Component.translatable("text.buildbattle.timer_bar.theme").withStyle(ChatFormatting.YELLOW))
+                                .append(Component.literal(theme)),
 
                         ((float) ticksLeft) / (this.config.votingTimeSecs() * 20));
             }
@@ -287,9 +292,9 @@ public class VotingStage {
                 if (time >= this.switchToNextArenaTime) {
                     if (this.nextArena()) {
                         this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX,
-                                Text.translatable("text.buildbattle.next_arena").formatted(Formatting.BLUE)));
+                                Component.translatable("text.buildbattle.next_arena").withStyle(ChatFormatting.BLUE)));
 
-                        this.gameSpace.getPlayers().playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), SoundCategory.MASTER, 10f, 1);
+                        this.gameSpace.getPlayers().playSound(SoundEvents.NOTE_BLOCK_PLING.value(), SoundSource.MASTER, 10f, 1);
                         this.allowVoting = true;
                         this.phase = Phase.VOTING;
                     } else {
@@ -297,8 +302,8 @@ public class VotingStage {
                         this.gameEndTime = this.currentTick + 200;
                         this.finishGame();
 
-                        this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.game_ended", this.votedArea.getBuildersText(this.gameSpace)), 1);
-                        this.timerBar.setColor(BossBar.Color.YELLOW);
+                        this.timerBar.update(Component.translatable("text.buildbattle.timer_bar.game_ended", this.votedArea.getBuildersText(this.gameSpace)), 1);
+                        this.timerBar.setColor(BossEvent.BossBarColor.YELLOW);
                     }
                 }
             }
@@ -310,13 +315,13 @@ public class VotingStage {
 
                 if (time % 20 == 0) {
                     for (PlayerData playerData : this.votedArea.players) {
-                        ItemStack itemStack = ItemStackBuilder.firework(DyeColor.values()[(int) (Math.random() * DyeColor.values().length - 1)].getFireworkColor(), 1, FireworkExplosionComponent.Type.LARGE_BALL).build();
-                        ServerPlayerEntity player = playerData.playerRef.getEntity(world);
+                        ItemStack itemStack = ItemStackBuilder.firework(DyeColor.values()[(int) (Math.random() * DyeColor.values().length - 1)].getFireworkColor(), 1, FireworkExplosion.Shape.LARGE_BALL).build();
+                        ServerPlayer player = playerData.playerRef.getEntity(world);
                         if (player != null) {
                             FireworkRocketEntity entity = new FireworkRocketEntity(world, player.getX(), player.getY() + 2, player.getZ(), itemStack);
-                            entity.noClip = true;
-                            entity.addVelocity(0, 0.2, 0);
-                            world.spawnEntity(entity);
+                            entity.noPhysics = true;
+                            entity.push(0, 0.2, 0);
+                            world.addFreshEntity(entity);
                         }
                     }
                 }
@@ -342,7 +347,7 @@ public class VotingStage {
                 this.allowVoting = true;
                 this.currentVotingDuration = this.currentTick + this.config.votingTimeSecs() * 20;
                 this.switchToNextArenaTime = this.currentVotingDuration + 100;
-                for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+                for (ServerPlayer player : this.gameSpace.getPlayers()) {
                     if (this.participants.containsKey(PlayerRef.of(player))) {
                         this.spawnParticipant(player);
                     } else {
@@ -362,7 +367,7 @@ public class VotingStage {
                 .filter(arena -> arena.getPlayerCount() != 0)
                 .collect(Collectors.toList());
 
-        var message = FormattingUtil.format(FormattingUtil.FLAG_PREFIX, Text.translatable("text.buildbattle.game_ended").formatted(Formatting.GOLD));
+        var message = FormattingUtil.format(FormattingUtil.FLAG_PREFIX, Component.translatable("text.buildbattle.game_ended").withStyle(ChatFormatting.GOLD));
         var players = this.gameSpace.getPlayers();
         players.sendMessage(message);
 
@@ -373,34 +378,34 @@ public class VotingStage {
 
             BuildArena arena = buildArenaList.get(x);
 
-            players.sendMessage(Text.translatable("text.buildbattle.win_place",
+            players.sendMessage(Component.translatable("text.buildbattle.win_place",
                     x + 1,
                     arena.getBuildersText(this.gameSpace),
-                    Text.literal("" + arena.score).formatted(Formatting.WHITE)
-            ).formatted(Formatting.YELLOW));
+                    Component.literal("" + arena.score).withStyle(ChatFormatting.WHITE)
+            ).withStyle(ChatFormatting.YELLOW));
         }
 
         for (BuildArena arena : buildArenaList) {
             int arenaPlace = buildArenaList.indexOf(arena) + 1;
-            Text yourScore = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WIN_STYLE, Text.translatable("text.buildbattle.your_score",
-                    Text.literal("" + (arenaPlace)).append(TextHelper.getOrdinal(arenaPlace)).formatted(Formatting.WHITE),
-                    Text.literal("" + arena.score).formatted(Formatting.WHITE)));
+            Component yourScore = FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, FormattingUtil.WIN_STYLE, Component.translatable("text.buildbattle.your_score",
+                    Component.literal("" + (arenaPlace)).append(TextHelper.getOrdinal(arenaPlace)).withStyle(ChatFormatting.WHITE),
+                    Component.literal("" + arena.score).withStyle(ChatFormatting.WHITE)));
 
             for (UUID uuid : arena.playersUuid) {
-                ServerPlayerEntity player = this.gameSpace.getPlayers().getEntity(uuid);
+                ServerPlayer player = this.gameSpace.getPlayers().getEntity(uuid);
 
                 if (player != null) {
-                    player.sendMessage(yourScore, false);
+                    player.sendSystemMessage(yourScore, false);
                 }
 
             }
         }
 
-        for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+        for (ServerPlayer player : this.gameSpace.getPlayers()) {
             this.votedArea = buildArenaList.get(0);
             this.votedArea.teleportPlayer(player, this.world);
         }
-        players.playSound(SoundEvents.ENTITY_VILLAGER_YES);
+        players.playSound(SoundEvents.VILLAGER_YES);
     }
 
     enum Phase {

@@ -1,22 +1,22 @@
 package eu.pb4.buildbattle.custom.items;
 
 import eu.pb4.polymer.core.api.item.PolymerItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import xyz.nucleoid.packettweaker.PacketContext;
 
 public class VotingItem extends Item implements PolymerItem {
     private final Item proxy;
     public final int score;
-    private final Formatting formatting;
+    private final ChatFormatting formatting;
 
-    public VotingItem(int score, Formatting formatting, Item item, Settings settings) {
+    public VotingItem(int score, ChatFormatting formatting, Item item, Properties settings) {
         super(settings);
 
         this.proxy = item;
@@ -30,11 +30,11 @@ public class VotingItem extends Item implements PolymerItem {
     }
 
     @Override
-    public @Nullable Identifier getPolymerItemModel(ItemStack stack, PacketContext context) {
+    public @Nullable Identifier getPolymerItemModel(ItemStack stack, PacketContext context, HolderLookup.Provider provider) {
         return null;
     }
 
-    public Text getName(ItemStack stack) {
-        return ((MutableText) super.getName(stack)).formatted(this.formatting);
+    public Component getName(ItemStack stack) {
+        return ((MutableComponent) super.getName(stack)).withStyle(this.formatting);
     }
 }

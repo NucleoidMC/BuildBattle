@@ -7,20 +7,19 @@ import eu.pb4.buildbattle.game.stages.BuildingStage;
 import eu.pb4.buildbattle.themes.ThemesRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
 import org.slf4j.Logger;
 import xyz.nucleoid.plasmid.api.game.GameAttachment;
 import xyz.nucleoid.plasmid.api.game.GameType;
-import net.minecraft.util.Identifier;
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import eu.pb4.buildbattle.game.stages.WaitingStage;
+import xyz.nucleoid.plasmid.api.game.GameTypes;
 import xyz.nucleoid.plasmid.api.game.rule.GameRuleType;
 import xyz.nucleoid.stimuli.event.StimulusEvent;
 
@@ -31,8 +30,8 @@ public class BuildBattle implements ModInitializer {
     public static final String ID = "buildbattle";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final GameType<BuildBattleConfig> TYPE = GameType.register(
-            Identifier.of(ID, "buildbattle"),
+    public static final GameType<BuildBattleConfig> TYPE = GameTypes.register(
+            Identifier.fromNamespaceAndPath(ID, "buildbattle"),
             BuildBattleConfig.CODEC,
             WaitingStage::open
     );
@@ -43,7 +42,7 @@ public class BuildBattle implements ModInitializer {
 
     public static final GameRuleType CREATIVE_LIMIT = GameRuleType.create();
 
-    public static final TagKey<Item> BANNED_ITEMS = TagKey.of(RegistryKeys.ITEM, Identifier.of(ID, "banned"));
+    public static final TagKey<Item> BANNED_ITEMS = TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(ID, "banned"));
 
     @Override
     public void onInitialize() {
@@ -56,18 +55,18 @@ public class BuildBattle implements ModInitializer {
         try {
             for (var listener : ctx.getListeners()) {
                 var result = listener.onUse(player, blockPos);
-                if (result != ActionResult.PASS) {
+                if (result != InteractionResult.PASS) {
                     return result;
                 }
             }
         } catch (Throwable t) {
             ctx.handleException(t);
         }
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     });
 
 
     public interface BucketUsage {
-        ActionResult onUse(ServerPlayerEntity player, BlockPos pos);
+        InteractionResult onUse(ServerPlayer player, BlockPos pos);
     }
 }

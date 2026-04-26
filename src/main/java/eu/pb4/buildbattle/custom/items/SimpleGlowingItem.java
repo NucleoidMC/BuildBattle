@@ -1,16 +1,16 @@
 package eu.pb4.buildbattle.custom.items;
 
 import eu.pb4.polymer.core.api.item.SimplePolymerItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 public class SimpleGlowingItem extends SimplePolymerItem {
-    public SimpleGlowingItem(Settings settings, Item polymerItem) {
+    public SimpleGlowingItem(Properties settings, Item polymerItem) {
         super(settings, polymerItem);
     }
 
     @Override
-    public boolean hasGlint(ItemStack stack) {
+    public boolean isFoil(ItemStack stack) {
         return true;
     }
 }

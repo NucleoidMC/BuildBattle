@@ -18,40 +18,46 @@ import eu.pb4.buildbattle.themes.ThemesRegistry;
 import eu.pb4.buildbattle.ui.UtilsUi;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.boss.BossBar;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.c2s.play.BookUpdateC2SPacket;
-import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
-import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
-import net.minecraft.particle.DustParticleEffect;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.protocol.game.ServerboundEditBookPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.*;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameMode;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.explosion.Explosion;
+import net.minecraft.world.BossEvent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.BoatItem;
+import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MobBucketItem;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import org.joml.Vector3f;
-import xyz.nucleoid.fantasy.RuntimeWorldConfig;
+import xyz.nucleoid.fantasy.RuntimeLevelConfig;
 import xyz.nucleoid.map_templates.BlockBounds;
 import xyz.nucleoid.plasmid.api.game.GameSpace;
 import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
@@ -79,7 +85,7 @@ import java.util.stream.Collectors;
 public class BuildingStage {
     public final GameSpace gameSpace;
     public final GameplayMap gameMap;
-    public final ServerWorld world;
+    public final ServerLevel world;
     public final Object2ObjectMap<PlayerRef, PlayerData> participants;
     private final BuildBattleConfig config;
     private final TimerBar timerBar;
@@ -93,7 +99,7 @@ public class BuildingStage {
     private boolean lockBuilding = true;
     private Phase phase = Phase.THEME_VOTING;
 
-    private BuildingStage(GameSpace gameSpace, ServerWorld world, GameplayMap map, GlobalWidgets widgets, BuildBattleConfig config, Set<PlayerRef> participants) {
+    private BuildingStage(GameSpace gameSpace, ServerLevel world, GameplayMap map, GlobalWidgets widgets, BuildBattleConfig config, Set<PlayerRef> participants) {
         this.gameSpace = gameSpace;
         this.config = config;
         this.gameMap = map;
@@ -117,7 +123,7 @@ public class BuildingStage {
         this.timerBar = new TimerBar(widgets);
 
         Theme theme = ThemesRegistry.get(config.theme());
-        this.timerBar.setColor(BossBar.Color.GREEN);
+        this.timerBar.setColor(BossEvent.BossBarColor.GREEN);
 
         if (config.forcedTheme().isPresent()) {
             this.theme = config.forcedTheme().get();
@@ -126,8 +132,8 @@ public class BuildingStage {
         } else if (config.themeVoting()) {
             this.themeVotingManager = new ThemeVotingManager(theme);
             this.themeVotingTime = 200;
-            this.timerBar.setColor(BossBar.Color.BLUE);
-            this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.voting_theme"), 1);
+            this.timerBar.setColor(BossEvent.BossBarColor.BLUE);
+            this.timerBar.update(Component.translatable("text.buildbattle.timer_bar.voting_theme"), 1);
         } else {
             assert theme != null;
             this.theme = theme.getRandom();
@@ -153,11 +159,11 @@ public class BuildingStage {
 
         GameplayMap map = new GameplayMap(gameSpace.getServer(), config, (int) Math.ceil(((double) gameSpace.getPlayers().size()) / config.teamSize()));
 
-        RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
+        RuntimeLevelConfig worldConfig = new RuntimeLevelConfig()
                 .setGenerator(map.asGenerator())
-                .setGameRule(GameRules.DO_WEATHER_CYCLE, false);
+                .setGameRule(GameRules.ADVANCE_WEATHER, false);
 
-        ServerWorld world = gameSpace.getWorlds().add(worldConfig);
+        ServerLevel world = gameSpace.getLevels().add(worldConfig);
 
         gameSpace.setActivity(game -> {
             GlobalWidgets widgets = GlobalWidgets.addTo(game);
@@ -201,7 +207,7 @@ public class BuildingStage {
         });
     }
 
-    private EventResult onFluidFlow(ServerWorld world, BlockPos blockPos, BlockState state, Direction direction, BlockPos blockPos1, BlockState state1) {
+    private EventResult onFluidFlow(ServerLevel world, BlockPos blockPos, BlockState state, Direction direction, BlockPos blockPos1, BlockState state1) {
         var arena = this.gameMap.getArena(blockPos1);
 
         if (arena != null && arena.buildingArea.contains(blockPos1)) {
@@ -212,15 +218,15 @@ public class BuildingStage {
     }
 
     private EventResult onEntitySpawn(Entity entity) {
-        if (entity instanceof ServerPlayerEntity) {
+        if (entity instanceof ServerPlayer) {
             return EventResult.PASS;
         } else if (BbUtils.equalsOrInstance(entity, ItemEntity.class)) {
             return EventResult.DENY;
         } else {
-            var arena = this.gameMap.getArena(entity.getBlockPos());
+            var arena = this.gameMap.getArena(entity.blockPosition());
 
             if (arena != null) {
-                if (entity.getWorld().getOtherEntities(null, arena.bounds.asBox(), (e) -> !(e instanceof PlayerEntity)).size() > 32) {
+                if (entity.level().getEntities((Entity) null, arena.bounds.asBox(), (e) -> !(e instanceof Player)).size() > 32) {
                     return EventResult.DENY;
                 }
             }
@@ -229,19 +235,19 @@ public class BuildingStage {
         return EventResult.PASS;
     }
 
-    private EventResult onClientPacket(ServerPlayerEntity player, Packet<?> packet) {
-        if (packet instanceof BookUpdateC2SPacket) {
+    private EventResult onClientPacket(ServerPlayer player, Packet<?> packet) {
+        if (packet instanceof ServerboundEditBookPacket) {
             return EventResult.DENY;
         }
 
-        if (packet instanceof CreativeInventoryActionC2SPacket packet1) {
-            ItemStack stack = packet1.stack();
+        if (packet instanceof ServerboundSetCreativeModeSlotPacket packet1) {
+            ItemStack stack = packet1.itemStack();
 
-            if (!Registries.ITEM.getId(stack.getItem()).getNamespace().equals(BuildBattle.ID)) {
-                if (stack.isIn(BuildBattle.BANNED_ITEMS)) {
+            if (!BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals(BuildBattle.ID)) {
+                if (stack.is(BuildBattle.BANNED_ITEMS)) {
                     stack = ItemStack.EMPTY;
                 } else {
-                    if (stack.getItem() instanceof BlockItem || (stack.getItem() instanceof BucketItem && !(stack.getItem() instanceof EntityBucketItem))) {
+                    if (stack.getItem() instanceof BlockItem || (stack.getItem() instanceof BucketItem && !(stack.getItem() instanceof MobBucketItem))) {
 
                     } else {
                         stack = WrappedItem.createWrapped(stack);
@@ -250,19 +256,19 @@ public class BuildingStage {
             }
 
             BbUtils.setCreativeStack(packet1, stack);
-            player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(player.playerScreenHandler.syncId, 0, packet1.slot(), stack));
+            player.connection.send(new ClientboundContainerSetSlotPacket(player.inventoryMenu.containerId, 0, packet1.slotNum(), stack));
         }
 
         return EventResult.PASS;
     }
 
 
-    private EventResult onEntityDamage(ServerPlayerEntity player, Hand hand, Entity entity, EntityHitResult entityHitResult) {
+    private EventResult onEntityDamage(ServerPlayer player, InteractionHand hand, Entity entity, EntityHitResult entityHitResult) {
         if (entity instanceof FloorChangingEntity) {
             return EventResult.DENY;
         }
 
-        BuildArena arena = this.gameMap.getArena(entity.getBlockPos());
+        BuildArena arena = this.gameMap.getArena(entity.blockPosition());
 
         if (arena != null && arena.isBuilder(player)) {
             return EventResult.PASS;
@@ -275,53 +281,53 @@ public class BuildingStage {
         return EventResult.DENY;
     }
 
-    private ActionResult onItemUse(ServerPlayerEntity player, Hand hand) {
-        ItemStack stack = player.getStackInHand(hand);
+    private InteractionResult onItemUse(ServerPlayer player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
         Item item = stack.getItem();
         if (BbUtils.equalsOrInstance(item, Items.CHORUS_FRUIT, Items.ENDER_PEARL, Items.ENDER_EYE)) {
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
 
         if (item == BBRegistry.UTIL_OPENER) {
             UtilsUi.open(player, this.participants.get(PlayerRef.of(player)), this);
-            return ActionResult.SUCCESS_SERVER;
+            return InteractionResult.SUCCESS_SERVER;
         }
 
-        return ActionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 
-    private ActionResult onBlockUse(ServerPlayerEntity player, Hand hand, BlockHitResult hitResult) {
+    private InteractionResult onBlockUse(ServerPlayer player, InteractionHand hand, BlockHitResult hitResult) {
         BuildArena arena = this.gameMap.getArena(hitResult.getBlockPos());
 
-        if (arena == null || !(arena.canBuild(hitResult.getBlockPos(), player) || arena.canBuild(hitResult.getBlockPos().offset(hitResult.getSide()), player))) {
-            return ActionResult.FAIL;
+        if (arena == null || !(arena.canBuild(hitResult.getBlockPos(), player) || arena.canBuild(hitResult.getBlockPos().relative(hitResult.getDirection()), player))) {
+            return InteractionResult.FAIL;
         }
 
-        ItemStack stack = player.getStackInHand(hand);
+        ItemStack stack = player.getItemInHand(hand);
         var item = stack.getItem();
-        if (BbUtils.equalsOrInstance(item, Items.ARMOR_STAND, EntityBucketItem.class, SpawnEggItem.class, BoatItem.class)) {
-            return ActionResult.FAIL;
+        if (BbUtils.equalsOrInstance(item, Items.ARMOR_STAND, MobBucketItem.class, SpawnEggItem.class, BoatItem.class)) {
+            return InteractionResult.FAIL;
         }
 
         var data = this.participants.get(PlayerRef.of(player));
-        if (hand == Hand.MAIN_HAND) {
+        if (hand == InteractionHand.MAIN_HAND) {
             data.lastTryFill = System.currentTimeMillis();
             if (item == BBRegistry.FILL_WAND) {
                 data.selectionStart = hitResult.getBlockPos();
                 if (data.selectionEnd == null) {
                     data.selectionEnd = data.selectionStart;
                 }
-                return ActionResult.FAIL;
+                return InteractionResult.FAIL;
             } else if (data.isSelected()) {
                 tryFill(player);
-                return ActionResult.FAIL;
+                return InteractionResult.FAIL;
             }
         }
 
-        return ActionResult.PASS;
+        return InteractionResult.PASS;
     }
 
-    private EventResult onBreakBlock(ServerPlayerEntity player, ServerWorld world, BlockPos pos) {
+    private EventResult onBreakBlock(ServerPlayer player, ServerLevel world, BlockPos pos) {
         if (this.lockBuilding) {
             return EventResult.DENY;
         }
@@ -331,7 +337,7 @@ public class BuildingStage {
         if (buildArena != null && buildArena.canBuild(pos, player)) {
             var data = this.participants.get(PlayerRef.of(player));
             data.lastTryFill = System.currentTimeMillis();
-            if (player.getMainHandStack().getItem() == BBRegistry.FILL_WAND) {
+            if (player.getMainHandItem().getItem() == BBRegistry.FILL_WAND) {
                 data.selectionEnd = pos;
                 if (data.selectionStart == null) {
                     data.selectionStart = data.selectionEnd;
@@ -347,21 +353,21 @@ public class BuildingStage {
         return EventResult.DENY;
     }
 
-    private void tryFill(ServerPlayerEntity player) {
+    private void tryFill(ServerPlayer player) {
         if (!this.config.enableTools()) {
             return;
         }
 
         var data = this.participants.get(PlayerRef.of(player));
-        var stack = player.getMainHandStack();
-        var item = player.getMainHandStack().getItem();
+        var stack = player.getMainHandItem();
+        var item = player.getMainHandItem().getItem();
 
         if (data.isSelected()) {
             BlockState state = BbUtils.getStateFrom(player, stack);
 
             if (state != null) {
                 for (var pos : BlockBounds.of(data.selectionStart, data.selectionEnd)) {
-                    player.getWorld().setBlockState(pos, state);
+                    player.level().setBlockAndUpdate(pos, state);
                 }
             }
 
@@ -369,12 +375,12 @@ public class BuildingStage {
         }
     }
 
-    private void onPlayerSwing(ServerPlayerEntity player, Hand hand) {
-        if (!player.getServer().isOnThread()) {
+    private void onPlayerSwing(ServerPlayer player, InteractionHand hand) {
+        if (!player.level().getServer().isSameThread()) {
             return;
         }
 
-        if (hand == Hand.MAIN_HAND && player.getMainHandStack().getItem() == BBRegistry.FILL_WAND) {
+        if (hand == InteractionHand.MAIN_HAND && player.getMainHandItem().getItem() == BBRegistry.FILL_WAND) {
             var data = this.participants.get(PlayerRef.of(player));
             if (System.currentTimeMillis() - data.lastTryFill > 500) {
                 data.resetSelection();
@@ -382,7 +388,7 @@ public class BuildingStage {
         }
     }
 
-    private EventResult onPlaceBlock(ServerPlayerEntity player, ServerWorld world, BlockPos pos, BlockState state, ItemUsageContext itemUsageContext) {
+    private EventResult onPlaceBlock(ServerPlayer player, ServerLevel world, BlockPos pos, BlockState state, UseOnContext itemUsageContext) {
         if (this.lockBuilding) {
             return EventResult.DENY;
         }
@@ -396,18 +402,18 @@ public class BuildingStage {
         return EventResult.DENY;
     }
 
-    private ActionResult onFluidPlace(ServerPlayerEntity player, BlockPos blockPos) {
+    private InteractionResult onFluidPlace(ServerPlayer player, BlockPos blockPos) {
         if (this.lockBuilding) {
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
 
         BuildArena buildArena = this.gameMap.getArena(blockPos);
 
         if (buildArena != null && buildArena.canBuild(blockPos, player)) {
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        return ActionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 
     private void onOpen() {
@@ -419,17 +425,17 @@ public class BuildingStage {
         }
     }
 
-    private void addPlayer(ServerPlayerEntity player) {
+    private void addPlayer(ServerPlayer player) {
         if (!this.participants.containsKey(PlayerRef.of(player))) {
             this.spawnSpectator(player);
         }
     }
 
-    private void removePlayer(ServerPlayerEntity player) {
+    private void removePlayer(ServerPlayer player) {
 
     }
 
-    private EventResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
+    private EventResult onPlayerDeath(ServerPlayer player, DamageSource source) {
         if (this.participants.containsKey(PlayerRef.of(player))) {
             this.spawnParticipant(player);
         } else {
@@ -438,15 +444,15 @@ public class BuildingStage {
         return EventResult.DENY;
     }
 
-    private void spawnParticipant(ServerPlayerEntity player) {
-        player.getInventory().clear();
-        player.changeGameMode(GameMode.CREATIVE);
+    private void spawnParticipant(ServerPlayer player) {
+        player.getInventory().clearContent();
+        player.setGameMode(GameType.CREATIVE);
         //player.getInventory().offerOrDrop(WrappedItem.createWrapped("test"));
         this.participants.get(PlayerRef.of(player)).arena.teleportPlayer(player, this.world);
     }
 
-    private void spawnSpectator(ServerPlayerEntity player) {
-        player.changeGameMode(GameMode.SPECTATOR);
+    private void spawnSpectator(ServerPlayer player) {
+        player.setGameMode(GameType.SPECTATOR);
         this.gameMap.buildArena.get(0).teleportPlayer(player, this.world);
     }
 
@@ -461,12 +467,12 @@ public class BuildingStage {
                     this.themeVotingManager = null;
 
                     this.switchToBuilding();
-                    this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.5f);
+                    this.gameSpace.getPlayers().playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0f, 1.5f);
                 } else {
                     for (PlayerRef ref : this.participants.keySet()) {
                         if (this.gameSpace.getPlayers().contains(ref)) {
                             ref.ifOnline(world, (p) -> {
-                                if (p.isLoaded()) {
+                                if (!p.touchingUnloadedChunk()) {
                                     this.themeVotingManager.addPlayer(p);
                                 }
                             });
@@ -474,21 +480,21 @@ public class BuildingStage {
                     }
                 }
 
-                this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.voting_theme"), ((float) (this.themeVotingTime - time)) / this.themeVotingTime);
+                this.timerBar.update(Component.translatable("text.buildbattle.timer_bar.voting_theme"), ((float) (this.themeVotingTime - time)) / this.themeVotingTime);
             }
             case BUILDING -> {
                 if (time >= this.buildingTimeDuration) {
-                    this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.HOURGLASS_PREFIX, Text.translatable("text.buildbattle.build_time_ended").formatted(Formatting.GREEN)));
+                    this.gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.HOURGLASS_PREFIX, Component.translatable("text.buildbattle.build_time_ended").withStyle(ChatFormatting.GREEN)));
                     this.lockBuilding = true;
-                    this.timerBar.setColor(BossBar.Color.RED);
-                    this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.times_up"), 0);
+                    this.timerBar.setColor(BossEvent.BossBarColor.RED);
+                    this.timerBar.update(Component.translatable("text.buildbattle.timer_bar.times_up"), 0);
                     gameSpace.setAttachment(BuildBattle.ACTIVE_GAME, null);
 
                     for (BuildArena buildArena : this.gameMap.buildArena) {
                         buildArena.removeEntity(world);
                     }
                     this.phase = Phase.WAITING;
-                    this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.5f);
+                    this.gameSpace.getPlayers().playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0f, 1.5f);
 
                 } else {
                     int ticksLeft = this.buildingTimeDuration - time;
@@ -498,34 +504,34 @@ public class BuildingStage {
                     int minutes = secondsUntilEnd / 60;
                     int seconds = secondsUntilEnd % 60;
                     if (minutes == 0 && seconds < 10 && time % 20 == 0) {
-                        this.gameSpace.getPlayers().playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                        this.gameSpace.getPlayers().playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0f, 1.0f);
                     }
 
-                    this.timerBar.setColor(BossBar.Color.GREEN);
-                    this.timerBar.update(Text.translatable("text.buildbattle.timer_bar.time_left", String.format("%02d:%02d", minutes, seconds))
-                            .append(Text.literal(" - ").formatted(Formatting.GRAY))
-                            .append(Text.translatable("text.buildbattle.timer_bar.theme").formatted(Formatting.YELLOW))
-                            .append(Text.literal(theme)), ((float) ticksLeft) / (this.buildingTimeDuration - this.themeVotingTime));
+                    this.timerBar.setColor(BossEvent.BossBarColor.GREEN);
+                    this.timerBar.update(Component.translatable("text.buildbattle.timer_bar.time_left", String.format("%02d:%02d", minutes, seconds))
+                            .append(Component.literal(" - ").withStyle(ChatFormatting.GRAY))
+                            .append(Component.translatable("text.buildbattle.timer_bar.theme").withStyle(ChatFormatting.YELLOW))
+                            .append(Component.literal(theme)), ((float) ticksLeft) / (this.buildingTimeDuration - this.themeVotingTime));
 
                     if (time % 10 == 0) {
-                        var borderEffect = new DustParticleEffect(ColorHelper.fromFloats(0, 0.8f, 0.8f, 0.8f), 2.0F);
-                        var selectionEffect = new DustParticleEffect(ColorHelper.fromFloats(0, 0.8f, 0.3f, 0.3f), 1.8F);
-                        for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+                        var borderEffect = new DustParticleOptions(ARGB.colorFromFloat(0, 0.8f, 0.8f, 0.8f), 2.0F);
+                        var selectionEffect = new DustParticleOptions(ARGB.colorFromFloat(0, 0.8f, 0.3f, 0.3f), 1.8F);
+                        for (ServerPlayer player : this.gameSpace.getPlayers()) {
                             var data = this.participants.get(PlayerRef.of(player));
                             if (data != null) {
-                                ParticleOutlineRenderer.render(player, data.arena.buildingArea.min(), data.arena.buildingArea.max().add(1, 1, 1), borderEffect);
+                                ParticleOutlineRenderer.render(player, data.arena.buildingArea.min(), data.arena.buildingArea.max().offset(1, 1, 1), borderEffect);
 
                                 if (data.isSelected()) {
-                                    ParticleOutlineRenderer.render(player, BlockBounds.min(data.selectionStart, data.selectionEnd), BlockBounds.max(data.selectionStart, data.selectionEnd).add(1, 1, 1), selectionEffect);
+                                    ParticleOutlineRenderer.render(player, BlockBounds.min(data.selectionStart, data.selectionEnd), BlockBounds.max(data.selectionStart, data.selectionEnd).offset(1, 1, 1), selectionEffect);
                                 }
                             }
                         }
 
-                        ParticleEffect effect2 = new DustParticleEffect(ColorHelper.fromFloats(0, 0f, 1f, 0f), 2.0F);
-                        for (ServerPlayerEntity player : this.gameSpace.getPlayers()) {
+                        ParticleOptions effect2 = new DustParticleOptions(ARGB.colorFromFloat(0, 0f, 1f, 0f), 2.0F);
+                        for (ServerPlayer player : this.gameSpace.getPlayers()) {
                             PlayerData data = this.participants.get(PlayerRef.of(player));
                             if (data != null) {
-                                ParticleOutlineRenderer.render(player, data.arena.bounds.min(), data.arena.bounds.max().add(1, 1, 1), effect2);
+                                ParticleOutlineRenderer.render(player, data.arena.bounds.min(), data.arena.bounds.max().offset(1, 1, 1), effect2);
                             }
                         }
                     }
@@ -541,9 +547,9 @@ public class BuildingStage {
 
 
     private void switchToBuilding() {
-        gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Text.translatable("text.buildbattle.theme",
-                Text.literal(this.theme).formatted(Formatting.GOLD)
-        ).formatted(Formatting.WHITE)));
+        gameSpace.getPlayers().sendMessage(FormattingUtil.format(FormattingUtil.GENERAL_PREFIX, Component.translatable("text.buildbattle.theme",
+                Component.literal(this.theme).withStyle(ChatFormatting.GOLD)
+        ).withStyle(ChatFormatting.WHITE)));
 
         this.phase = Phase.BUILDING;
         this.lockBuilding = false;

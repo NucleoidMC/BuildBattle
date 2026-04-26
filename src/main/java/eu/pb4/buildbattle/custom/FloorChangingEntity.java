@@ -7,43 +7,46 @@ import eu.pb4.buildbattle.game.stages.BuildingStage;
 import eu.pb4.buildbattle.mixin.VillagerEntityAccessor;
 import eu.pb4.buildbattle.other.BbUtils;
 import eu.pb4.polymer.core.api.entity.PolymerEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.*;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Arm;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.village.VillagerData;
-import net.minecraft.world.World;
-import xyz.nucleoid.packettweaker.PacketContext;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.npc.villager.VillagerData;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
+import net.minecraft.world.phys.Vec3;
 import xyz.nucleoid.plasmid.api.game.GameSpaceManager;
 
 import java.util.List;
 
 public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
     private final VillagerData villagerData;
-    private ItemStack lastUsedFloor = Items.GRASS_BLOCK.getDefaultStack();
+    private ItemStack lastUsedFloor = Items.GRASS_BLOCK.getDefaultInstance();
 
-    public FloorChangingEntity(EntityType<FloorChangingEntity> type, World world) {
+    public FloorChangingEntity(EntityType<FloorChangingEntity> type, Level world) {
         super(type, world);
         this.setCustomNameVisible(true);
         this.setSilent(true);
         this.setNoGravity(true);
-        this.setCustomName(Text.translatable("text.buildbattle.floor_change").formatted(Formatting.GOLD));
-        this.villagerData = new VillagerData(Registries.VILLAGER_TYPE.getRandom(this.getRandom()).get(), Registries.VILLAGER_PROFESSION.getRandom(this.getRandom()).get(), 3);
+        this.setCustomName(Component.translatable("text.buildbattle.floor_change").withStyle(ChatFormatting.GOLD));
+        this.villagerData = new VillagerData(BuiltInRegistries.VILLAGER_TYPE.getRandom(this.getRandom()).get(), BuiltInRegistries.VILLAGER_PROFESSION.getRandom(this.getRandom()).get(), 3);
     }
 
-    public FloorChangingEntity(World world) {
+    public FloorChangingEntity(Level world) {
         this(BBRegistry.FLOOR_CHANGER_ENTITY, world);
     }
 
@@ -53,27 +56,27 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
     }
 
     @Override
-    public void tickMovement() {
-        this.turnHead(this.getYaw());
+    public void aiStep() {
+        this.tickHeadTurn(this.getYRot());
     }
 
     @Override
-    public Arm getMainArm() {
-        return Arm.RIGHT;
+    public HumanoidArm getMainArm() {
+        return HumanoidArm.RIGHT;
     }
 
     @Override
-    public boolean canTakeDamage() {
+    public boolean canBeSeenAsEnemy() {
         return false;
     }
 
     @Override
-    public ItemStack getEquippedStack(EquipmentSlot slot) {
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public void equipStack(EquipmentSlot slot, ItemStack stack) {}
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {}
 
     @Override
     public EntityType<?> getPolymerEntityType(PacketContext context) {
@@ -81,49 +84,49 @@ public class FloorChangingEntity extends LivingEntity implements PolymerEntity {
     }
 
     @Override
-    public List<Pair<EquipmentSlot, ItemStack>> getPolymerVisibleEquipment(List<Pair<EquipmentSlot, ItemStack>> map, ServerPlayerEntity player) {
+    public List<Pair<EquipmentSlot, ItemStack>> getPolymerVisibleEquipment(List<Pair<EquipmentSlot, ItemStack>> map, ServerPlayer player) {
         return List.of(Pair.of(EquipmentSlot.MAINHAND, this.lastUsedFloor));
     }
 
     @Override
-    public void modifyRawTrackedData(List<DataTracker.SerializedEntry<?>> data, ServerPlayerEntity player, boolean initial) {
-        data.add(DataTracker.SerializedEntry.of(VillagerEntityAccessor.get(), this.villagerData));
+    public void modifyRawTrackedData(List<SynchedEntityData.DataValue<?>> data, ServerPlayer player, boolean initial) {
+        data.add(SynchedEntityData.DataValue.create(VillagerEntityAccessor.get(), this.villagerData));
     }
 
 
     @Override
-    public ActionResult interact(PlayerEntity player, Hand hand) {
+    public InteractionResult interact(Player player, InteractionHand hand, Vec3 pos) {
         BuildArena buildArena = null;
-        var game = GameSpaceManager.get().byWorld(this.getWorld());
+        var game = GameSpaceManager.get().byLevel(this.level());
         if (game != null) {
             BuildingStage stage = game.getAttachment(BuildBattle.ACTIVE_GAME);
 
             if (stage != null) {
-                buildArena = stage.gameMap.getArena(this.getBlockPos());
+                buildArena = stage.gameMap.getArena(this.blockPosition());
             }
         }
 
 
         if (buildArena == null) {
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
 
 
         if (buildArena.isBuilder(player)) {
-            BlockState state = BbUtils.getStateFrom((ServerPlayerEntity) player, player.getStackInHand(hand));
+            BlockState state = BbUtils.getStateFrom((ServerPlayer) player, player.getItemInHand(hand));
             if (state != null) {
-                this.lastUsedFloor = player.getStackInHand(hand);
-                ((ServerWorld)this.getWorld()).getChunkManager().sendToOtherNearbyPlayers(this, new EntityEquipmentUpdateS2CPacket(this.getId(),
+                this.lastUsedFloor = player.getItemInHand(hand);
+                ((ServerLevel)this.level()).getChunkSource().sendToTrackingPlayers(this, new ClientboundSetEquipmentPacket(this.getId(),
                         List.of(new Pair<>(EquipmentSlot.MAINHAND, this.lastUsedFloor))));
                 for (BlockPos blockPos : buildArena.ground) {
-                    this.getWorld().setBlockState(blockPos, state);
+                    this.level().setBlockAndUpdate(blockPos, state);
                 }
 
-                return ActionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
         }
 
-        return ActionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 }
 

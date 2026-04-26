@@ -3,11 +3,11 @@ package eu.pb4.buildbattle.game;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.Identifier;
 import eu.pb4.buildbattle.game.map.MapConfig;
 import xyz.nucleoid.plasmid.api.game.common.config.WaitingLobbyConfig;
 
 import java.util.Optional;
+import net.minecraft.resources.Identifier;
 
 public record BuildBattleConfig(WaitingLobbyConfig playerConfig,
                                 MapConfig mapConfig, int timeLimitSecs, int votingTimeSecs,

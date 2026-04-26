@@ -1,14 +1,14 @@
 package eu.pb4.buildbattle.mixin;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.CreativeInventoryActionC2SPacket;
+import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(CreativeInventoryActionC2SPacket.class)
+@Mixin(ServerboundSetCreativeModeSlotPacket.class)
 public interface CreativeActionPacketAccessor {
     @Mutable
-    @Accessor("stack")
+    @Accessor("itemStack")
     void bb_setStack(ItemStack stack);
 }

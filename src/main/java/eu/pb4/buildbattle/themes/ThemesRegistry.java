@@ -11,10 +11,10 @@ import com.mojang.serialization.JsonOps;
 import eu.pb4.buildbattle.BuildBattle;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
 import com.mojang.datafixers.util.Pair;
 import xyz.nucleoid.plasmid.api.util.TinyRegistry;
@@ -30,24 +30,24 @@ public class ThemesRegistry {
     private static final TinyRegistry<Theme> THEMES = TinyRegistry.create();
 
     public static void register() {
-        ResourceManagerHelper serverData = ResourceManagerHelper.get(ResourceType.SERVER_DATA);
+        ResourceManagerHelper serverData = ResourceManagerHelper.get(PackType.SERVER_DATA);
 
         serverData.registerReloadListener(new SimpleSynchronousResourceReloadListener() {
             @Override
             public Identifier getFabricId() {
-                return Identifier.of(BuildBattle.ID, "themes");
+                return Identifier.fromNamespaceAndPath(BuildBattle.ID, "themes");
             }
 
             @Override
-            public void reload(ResourceManager manager) {
+            public void onResourceManagerReload(ResourceManager manager) {
                 THEMES.clear();
 
-                var resources = manager.findResources("themes", path -> path.getPath().endsWith(".json"));
+                var resources = manager.listResources("themes", path -> path.getPath().endsWith(".json"));
 
                 for (var pair : resources.entrySet()) {
                     try {
                         Resource resource = pair.getValue();
-                        try (Reader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+                        try (Reader reader = new BufferedReader(new InputStreamReader(resource.open()))) {
                             JsonElement json = JsonParser.parseReader(reader);
 
                             Identifier identifier = identifierFromPath(pair.getKey());
@@ -69,7 +69,7 @@ public class ThemesRegistry {
     private static Identifier identifierFromPath(Identifier location) {
         String path = location.getPath();
         path = path.substring("themes/".length(), path.length() - ".json".length());
-        return Identifier.of(location.getNamespace(), path);
+        return Identifier.fromNamespaceAndPath(location.getNamespace(), path);
     }
 
     @Nullable
