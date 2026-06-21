@@ -3,6 +3,7 @@ package eu.pb4.buildbattle.game.stages;
 import eu.pb4.buildbattle.game.BuildBattleConfig;
 import eu.pb4.buildbattle.game.map.WaitingMap;
 import eu.pb4.buildbattle.other.TextHelper;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.level.gamerules.GameRules;
 import xyz.nucleoid.fantasy.RuntimeLevelConfig;
 import xyz.nucleoid.plasmid.api.game.*;
@@ -17,10 +18,6 @@ import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Display;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 
@@ -44,7 +41,7 @@ public record WaitingStage(GameSpace gameSpace, WaitingMap map, BuildBattleConfi
             game.listen(GamePlayerEvents.ACCEPT, offer -> offer.teleport(world, waitingMap.getSpawnLocation()));
             game.listen(EntitySpawnEvent.EVENT, (x) -> x instanceof Mob ? EventResult.DENY : EventResult.PASS);
 
-            var display = EntityType.TEXT_DISPLAY.create(world, EntitySpawnReason.STRUCTURE);
+            var display = EntityTypes.TEXT_DISPLAY.create(world, EntitySpawnReason.STRUCTURE);
             assert display != null;
             display.setPos(waitingMap.hologramPos.subtract(0, 1, 0));
             display.setBillboardConstraints(Display.BillboardConstraints.VERTICAL);

@@ -112,10 +112,10 @@ public class ThemeVotingManager {
                 ThemeVotingManager.this.updateGuis();
             });
 
-            Item filledItem = Items.ORANGE_STAINED_GLASS_PANE;
+            Item filledItem = Items.STAINED_GLASS_PANE.orange();
             if (theme.equals(this.vote)) {
                 icon.glow();
-                filledItem = Items.GREEN_STAINED_GLASS_PANE;
+                filledItem = Items.STAINED_GLASS_PANE.green();
             }
 
             int relativePos = pos * 9;
@@ -125,7 +125,7 @@ public class ThemeVotingManager {
 
             GuiElementBuilder filled = new GuiElementBuilder(filledItem).hideTooltip();
 
-            GuiElementBuilder empty = new GuiElementBuilder(Items.GRAY_STAINED_GLASS_PANE).hideTooltip();
+            GuiElementBuilder empty = new GuiElementBuilder(Items.STAINED_GLASS_PANE.gray()).hideTooltip();
 
             for (int x = 1; x <= slots; x++) {
                 this.setSlot(relativePos + x, filled);
