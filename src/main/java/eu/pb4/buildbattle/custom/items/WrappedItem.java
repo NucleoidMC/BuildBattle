@@ -3,17 +3,17 @@ package eu.pb4.buildbattle.custom.items;
 import eu.pb4.buildbattle.custom.BBRegistry;
 import eu.pb4.polymer.core.api.item.PolymerItem;
 import eu.pb4.polymer.core.api.item.PolymerItemUtils;
+import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.BlockTransformer;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
-import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
 
 public final class WrappedItem extends Item implements PolymerItem {
     public WrappedItem(Properties settings) {
@@ -23,13 +23,12 @@ public final class WrappedItem extends Item implements PolymerItem {
     @Override
     public InteractionResult useOn(UseOnContext context) {
         var item = getPolymerItem(context.getItemInHand(), PacketContext.get());
-        if (item instanceof ShovelItem) {
-            Items.IRON_SHOVEL.useOn(context);
-        } else if (item instanceof AxeItem) {
-            Items.IRON_AXE.useOn(context);
-        } else if (item instanceof HoeItem) {
-            Items.IRON_HOE.useOn(context);
-        } else if (item == Items.BONE_MEAL) {
+        var transformer = item.components().get(DataComponents.BLOCK_TRANSFORMER);
+        if (transformer != null) {
+            return transformer.value().transformBlock(context);
+        }
+
+        if (item == Items.BONE_MEAL) {
             item.useOn(context);
         }
 
